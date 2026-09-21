@@ -289,7 +289,7 @@ input {
   --tile-pad: calc(var(--gap) * 1.2);
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--gap);
   min-height: 0;
   padding: var(--tile-pad);
@@ -353,8 +353,7 @@ input {
   z-index: 1;
 }
 
-.tile.has-image,
-.tile.has-image .tile__icon {
+.tile.has-image {
   color: #fff;
 }
 
@@ -367,14 +366,8 @@ input {
   color: var(--ink);
 }
 
-.tile__icon {
-  grid-row: 1;
-  font-size: clamp(34px, 5.6vmin, 60px);
-  color: var(--ink-2);
-}
-
 .tile__meta {
-  grid-row: 3;
+  grid-row: 2;
   display: grid;
   gap: 0.25em;
   padding-right: calc(var(--touch) * 0.6);
@@ -423,18 +416,6 @@ input {
 
 .cta--start {
   width: 100%;
-}
-
-/* Breathing ring so the CTA reads from across the aisle. */
-.cta--start::before {
-  content: '';
-  position: absolute;
-  inset: -7px;
-  border-radius: calc(var(--radius) + 7px);
-  border: 2px solid var(--red);
-  opacity: 0;
-  animation: pulse 2.6s ease-out infinite;
-  pointer-events: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -845,18 +826,6 @@ input {
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.75;
-    transform: scale(0.985);
-  }
-  65%,
-  100% {
-    opacity: 0;
-    transform: scale(1.035);
   }
 }
 

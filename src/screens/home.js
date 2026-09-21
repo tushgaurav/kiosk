@@ -25,7 +25,6 @@ export function renderHome({ brand, products, onSelect }) {
     const tile = el(
       `<button class="tile tile--${p.tile}" type="button" role="listitem" style="--i:${i}">
          <img class="tile__img" src="${p.image}" alt="" draggable="false" />
-         <span class="tile__icon">${icon(p.icon)}</span>
          <span class="tile__meta">
            <span class="tile__eyebrow">${p.eyebrow}</span>
            <span class="tile__name">${p.name}</span>
