@@ -213,7 +213,14 @@ input {
 .iconbtn--close {
   background: transparent;
   color: var(--ink);
+}
+
+.iconbtn--close {
   box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.iconbtn--home {
+  font-size: calc(var(--touch) * 0.5);
 }
 
 .iconbtn--home:active,
