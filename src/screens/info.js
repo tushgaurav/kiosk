@@ -1,8 +1,6 @@
 import { el, figure, icon, logo, mountQr } from '../components/ui.js'
 
-const pad = (n) => String(n).padStart(2, '0')
-
-export function renderInfo({ brand, product, index, total, onHome, onPrev, onNext, onInquire }) {
+export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }) {
   const screen = el(
     `<section class="screen screen--info">
        <header class="topbar">
@@ -12,11 +10,6 @@ export function renderInfo({ brand, product, index, total, onHome, onPrev, onNex
        </header>
 
        <div class="info__title">
-         <p class="eyebrow">
-           <span class="eyebrow__num">${pad(index + 1)}<em>/${pad(total)}</em></span>
-           <span class="eyebrow__sep" aria-hidden="true"></span>
-           <span>${product.eyebrow}</span>
-         </p>
          <h1 class="title">${product.name}</h1>
        </div>
 
@@ -26,7 +19,6 @@ export function renderInfo({ brand, product, index, total, onHome, onPrev, onNex
          <p class="lede">${product.description}</p>
          <div class="qr">
            <div class="qr__code" aria-busy="true"></div>
-           <span class="qr__label">${icon('scan')} Scan for details</span>
          </div>
        </div>
 

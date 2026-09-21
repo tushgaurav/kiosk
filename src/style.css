@@ -233,22 +233,6 @@ input {
   color: var(--muted);
 }
 
-.eyebrow__num {
-  color: var(--red);
-  font-variant-numeric: tabular-nums;
-}
-
-.eyebrow__num em {
-  font-style: normal;
-  color: var(--muted);
-}
-
-.eyebrow__sep {
-  width: 2.5em;
-  height: 1px;
-  background: var(--line);
-}
-
 /* --------------------------------------------------------------------------
    Home / attract screen
    -------------------------------------------------------------------------- */
@@ -434,9 +418,7 @@ input {
 
 .info__title {
   grid-area: title;
-  display: grid;
-  gap: 0.6em;
-  margin-top: calc(var(--pad) * 0.2);
+  margin-top: calc(var(--pad) * 0.15);
   animation: rise 0.55s var(--ease-out) both;
 }
 
@@ -550,15 +532,6 @@ input {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.qr__label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-size: var(--fs-small);
-  font-weight: 500;
-  color: var(--muted);
 }
 
 .info__footer {

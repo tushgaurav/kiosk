@@ -18,7 +18,6 @@ const ICONS = {
   arrow: `<path d="M7 17L17 7"/><path d="M8 7h9v9"/>`,
   close: `<path d="M6 6l12 12"/><path d="M18 6L6 18"/>`,
   check: `<path d="M5 12.5l4.5 4.5L19 7.5"/>`,
-  scan: `<path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M3 12h18"/>`,
 }
 
 export function icon(name, cls = '') {
