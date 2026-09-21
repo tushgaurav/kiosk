@@ -1,60 +1,111 @@
+import '@fontsource-variable/geist'
 import './style.css'
-import heroImg from './assets/hero.png'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import { setupCounter } from './counter.js'
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+import { brand, products } from './data/products.js'
+import { renderHome } from './screens/home.js'
+import { renderInfo } from './screens/info.js'
+import { closeInquiry, installLeadExport, openInquiry } from './components/inquiry.js'
 
-<div class="ticks"></div>
+/** Return to the attract screen after this much inactivity. */
+const IDLE_MS = 75_000
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+const app = document.querySelector('#app')
+const state = { view: 'home', index: 0 }
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+function draw() {
+  const screen =
+    state.view === 'home'
+      ? renderHome({ brand, products, onSelect: (i) => go({ view: 'info', index: i }, 'forward') })
+      : renderInfo({
+          brand,
+          product: products[state.index],
+          index: state.index,
+          total: products.length,
+          onHome: () => go({ view: 'home' }, 'back'),
+          onPrev: () => go({ index: (state.index - 1 + products.length) % products.length }, 'back'),
+          onNext: () => go({ index: (state.index + 1) % products.length }, 'forward'),
+          onInquire: openInquiry,
+        })
+  app.replaceChildren(screen)
+}
 
-setupCounter(document.querySelector('#counter'))
+// ---- Hash routing (#/ or #/p/<product-id>) so screens are deep-linkable ----
+function readHash() {
+  const m = location.hash.match(/^#\/p\/([\w-]+)/)
+  const i = m ? products.findIndex((p) => p.id === m[1]) : -1
+  return i >= 0 ? { view: 'info', index: i } : { view: 'home', index: 0 }
+}
+
+function writeHash() {
+  const hash = state.view === 'info' ? `#/p/${products[state.index].id}` : '#/'
+  if (location.hash !== hash) history.replaceState(null, '', hash)
+}
+
+window.addEventListener('hashchange', () => {
+  const next = readHash()
+  if (next.view !== state.view || next.index !== state.index) go(next, 'forward')
+})
+
+function go(next, dir = 'forward') {
+  Object.assign(state, next)
+  writeHash()
+  closeInquiry()
+  document.documentElement.dataset.dir = dir
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.startViewTransition(draw)
+  } else {
+    draw()
+  }
+}
+
+// ---- Idle → attract screen -------------------------------------------------
+let idleTimer
+function armIdle() {
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    if (state.view !== 'home') go({ view: 'home', index: 0 }, 'back')
+    else closeInquiry()
+  }, IDLE_MS)
+}
+for (const evt of ['pointerdown', 'pointermove', 'keydown', 'touchstart']) {
+  window.addEventListener(evt, armIdle, { passive: true })
+}
+armIdle()
+
+// ---- Kiosk hardening -------------------------------------------------------
+window.addEventListener('contextmenu', (e) => e.preventDefault())
+window.addEventListener('dragstart', (e) => e.preventDefault())
+// Block pinch-zoom gestures on browsers that still allow them.
+document.addEventListener('gesturestart', (e) => e.preventDefault())
+document.addEventListener(
+  'wheel',
+  (e) => {
+    if (e.ctrlKey) e.preventDefault()
+  },
+  { passive: false },
+)
+
+// ---- Keyboard (handy for testing on a laptop) ------------------------------
+window.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea')) return
+  switch (e.key) {
+    case 'ArrowRight':
+      state.view === 'info' ? go({ index: (state.index + 1) % products.length }, 'forward') : go({ view: 'info', index: 0 })
+      break
+    case 'ArrowLeft':
+      if (state.view === 'info') go({ index: (state.index - 1 + products.length) % products.length }, 'back')
+      break
+    case 'Escape':
+    case 'Home':
+      go({ view: 'home', index: 0 }, 'back')
+      break
+    case 'f':
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()
+      break
+  }
+})
+
+installLeadExport()
+Object.assign(state, readHash())
+writeHash()
+draw()
