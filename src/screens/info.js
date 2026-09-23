@@ -1,11 +1,11 @@
-import { el, figure, icon, logo, mountQr } from '../components/ui.js'
+import { el, figure, icon, logo, mountQr, scrollFade } from '../components/ui.js'
 
-export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }) {
+export function renderInfo({ brand, product, index, total, onHome, onPrev, onNext, onInquire }) {
   const screen = el(
     `<section class="screen screen--info">
        <header class="topbar">
-         <button class="iconbtn iconbtn--home" type="button" aria-label="Back to start">
-           ${icon('home')}
+         <button class="pill pill--home" type="button" aria-label="Back to start">
+           ${icon('home')}<span>Home</span>
          </button>
        </header>
 
@@ -20,7 +20,7 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
          <p class="lede">${product.description}</p>
          <div class="qr">
            <div class="qr__code" aria-busy="true"></div>
-           <span class="qr__hint">Scan for details</span>
+           <span class="qr__label">Scan for details on your phone</span>
          </div>
          ${facts(product.facts)}
          ${range(product.range)}
@@ -28,8 +28,9 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
 
        <footer class="info__footer">
          <div class="pager">
-           <button class="iconbtn iconbtn--prev" type="button" aria-label="Previous">${icon('prev')}</button>
-           <button class="iconbtn iconbtn--next" type="button" aria-label="Next">${icon('next')}</button>
+           <button class="iconbtn iconbtn--prev" type="button" aria-label="Previous product">${icon('prev')}</button>
+           <span class="pager__count" aria-label="Product ${index + 1} of ${total}"><b>${index + 1}</b> / ${total}</span>
+           <button class="iconbtn iconbtn--next" type="button" aria-label="Next product">${icon('next')}</button>
          </div>
          <button class="cta cta--inquire" type="button"><span>Inquire Now</span></button>
        </footer>
@@ -42,18 +43,9 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
   const qr = screen.querySelector('.qr__code')
   mountQr(qr, product.url).then(() => qr.removeAttribute('aria-busy'))
 
-  // Fade the bottom edge of the range list only while there is more to scroll.
-  const list = screen.querySelector('.range')
-  if (list) {
-    const update = () => {
-      const more = list.scrollHeight - list.clientHeight - list.scrollTop > 4
-      list.classList.toggle('is-scrollable', more)
-    }
-    list.addEventListener('scroll', update, { passive: true })
-    new ResizeObserver(update).observe(list)
-  }
+  scrollFade(screen.querySelector('.range'))
 
-  screen.querySelector('.iconbtn--home').addEventListener('click', onHome)
+  screen.querySelector('.pill--home').addEventListener('click', onHome)
   screen.querySelector('.iconbtn--prev').addEventListener('click', onPrev)
   screen.querySelector('.iconbtn--next').addEventListener('click', onNext)
   screen.querySelector('.cta--inquire').addEventListener('click', () => onInquire(product))

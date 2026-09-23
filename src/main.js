@@ -1,7 +1,8 @@
 import '@fontsource-variable/geist'
 import './style.css'
 
-import { brand, products } from './data/products.js'
+import { about, brand, products } from './data/products.js'
+import { renderAbout } from './screens/about.js'
 import { renderHome } from './screens/home.js'
 import { renderInfo } from './screens/info.js'
 import { closeInquiry, installLeadExport, openInquiry } from './components/inquiry.js'
@@ -12,10 +13,27 @@ const IDLE_MS = 75_000
 const app = document.querySelector('#app')
 const state = { view: 'home', index: 0 }
 
+/** Stand-in "product" so the inquiry sheet works from the About screen. */
+const generalInquiry = { id: 'general', name: 'General', url: brand.site }
+
 function draw() {
   const screen =
     state.view === 'home'
-      ? renderHome({ brand, products, onSelect: (i) => go({ view: 'info', index: i }, 'forward') })
+      ? renderHome({
+          brand,
+          products,
+          onSelect: (i) => go({ view: 'info', index: i }, 'forward'),
+          onAbout: () => go({ view: 'about' }, 'forward'),
+        })
+      : state.view === 'about'
+      ? renderAbout({
+          brand,
+          about,
+          initial: state.section,
+          onHome: () => go({ view: 'home' }, 'back'),
+          onExplore: () => go({ view: 'info', index: 0 }, 'forward'),
+          onInquire: () => openInquiry(generalInquiry),
+        })
       : renderInfo({
           brand,
           product: products[state.index],
@@ -29,15 +47,18 @@ function draw() {
   app.replaceChildren(screen)
 }
 
-// ---- Hash routing (#/ or #/p/<product-id>) so screens are deep-linkable ----
+// ---- Hash routing (#/, #/about, #/p/<product-id>) so screens are deep-linkable ----
 function readHash() {
+  const a = location.hash.match(/^#\/about(?:\/([\w-]+))?$/)
+  if (a) return { view: 'about', index: 0, section: a[1] }
   const m = location.hash.match(/^#\/p\/([\w-]+)/)
   const i = m ? products.findIndex((p) => p.id === m[1]) : -1
   return i >= 0 ? { view: 'info', index: i } : { view: 'home', index: 0 }
 }
 
 function writeHash() {
-  const hash = state.view === 'info' ? `#/p/${products[state.index].id}` : '#/'
+  const hash =
+    state.view === 'info' ? `#/p/${products[state.index].id}` : state.view === 'about' ? '#/about' : '#/'
   if (location.hash !== hash) history.replaceState(null, '', hash)
 }
 

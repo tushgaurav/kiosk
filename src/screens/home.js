@@ -1,15 +1,19 @@
-import { el, icon, logo } from '../components/ui.js'
+import { el, icon, logo, media } from '../components/ui.js'
 
 /**
  * Attract screen. Large touch targets, asymmetric tile grid, and a
  * pulsing "Touch to Start" CTA so it reads from across the aisle.
  */
-export function renderHome({ brand, products, onSelect }) {
+export function renderHome({ brand, products, onSelect, onAbout }) {
   const screen = el(
     `<section class="screen screen--home">
-       <header class="topbar"></header>
+       <header class="topbar">
+         <button class="pill pill--about" type="button">
+           <span>About us</span>${icon('arrow')}
+         </button>
+       </header>
        <h1 class="headline">${brand.tagline.replace(/\.$/, '')}<span class="dot">.</span></h1>
-       <div class="tiles" role="list"></div>
+       <nav class="tiles" aria-label="Products"></nav>
        <footer class="home__footer">
          <button class="cta cta--start" type="button">
            <span>Touch to Start</span>
@@ -18,13 +22,14 @@ export function renderHome({ brand, products, onSelect }) {
      </section>`,
   )
 
-  screen.querySelector('.topbar').append(logo(brand))
+  screen.querySelector('.topbar').prepend(logo(brand))
+  screen.querySelector('.pill--about').addEventListener('click', onAbout)
 
   const tiles = screen.querySelector('.tiles')
   products.forEach((p, i) => {
     const tile = el(
-      `<button class="tile tile--${p.tile}" type="button" role="listitem" style="--i:${i}">
-         <img class="tile__img" src="${p.image}" alt="" draggable="false" />
+      `<button class="tile tile--${p.tile}" type="button" style="--i:${i}">
+         ${media(p, 'tile__img')}
          <span class="tile__meta">
            <span class="tile__eyebrow">${p.eyebrow}</span>
            <span class="tile__name">${p.name}</span>
@@ -33,7 +38,8 @@ export function renderHome({ brand, products, onSelect }) {
        </button>`,
     )
     const img = tile.querySelector('.tile__img')
-    img.addEventListener('load', () => tile.classList.add('has-image'), { once: true })
+    const ready = img.tagName === 'VIDEO' ? 'loadeddata' : 'load'
+    img.addEventListener(ready, () => tile.classList.add('has-image'), { once: true })
     img.addEventListener('error', () => img.remove(), { once: true })
     tile.addEventListener('click', () => onSelect(i))
     tiles.append(tile)

@@ -40,19 +40,19 @@ export function openInquiry(product) {
            <div class="form__grid">
              <label class="field">
                <span class="field__label">Name</span>
-               <input name="name" type="text" autocomplete="off" required placeholder="Jane Smith" />
+               <input name="name" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" required placeholder="Jane Smith" />
              </label>
              <label class="field">
                <span class="field__label">Company</span>
-               <input name="company" type="text" autocomplete="off" placeholder="Acme Manufacturing" />
+               <input name="company" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" placeholder="Acme Manufacturing" />
              </label>
              <label class="field">
                <span class="field__label">Email</span>
-               <input name="email" type="email" autocomplete="off" inputmode="email" required placeholder="jane@acme.com" />
+               <input name="email" type="email" autocomplete="off" autocapitalize="off" inputmode="email" enterkeyhint="next" required placeholder="jane@acme.com" />
              </label>
              <label class="field">
                <span class="field__label">Phone</span>
-               <input name="phone" type="tel" autocomplete="off" inputmode="tel" placeholder="+1 555 010 0100" />
+               <input name="phone" type="tel" autocomplete="off" inputmode="tel" enterkeyhint="send" placeholder="+91 98765 43210" />
              </label>
            </div>
            <p class="form__error" role="alert" hidden></p>
@@ -85,8 +85,27 @@ export function openInquiry(product) {
 
   const form = sheet.querySelector('form')
   const error = sheet.querySelector('.form__error')
-  const firstInput = form.querySelector('input[name=name]')
-  setTimeout(() => firstInput.focus({ preventScroll: true }), 350)
+  const inputs = [...form.querySelectorAll('input')]
+
+  // No auto-focus: on a touch kiosk that would pop the on-screen keyboard
+  // over the sheet before the visitor has seen it. Instead, keep whichever
+  // field they tap in view once the keyboard shrinks the viewport.
+  inputs.forEach((input, i) => {
+    input.addEventListener('focus', () => {
+      setTimeout(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250)
+    })
+    // Clear the error state as soon as the visitor starts correcting it.
+    input.addEventListener('input', () => {
+      input.closest('.field').classList.remove('is-invalid')
+      if (!form.querySelector('.field.is-invalid')) error.hidden = true
+    })
+    // "Next" on the on-screen keyboard moves to the following field.
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || i === inputs.length - 1) return
+      e.preventDefault()
+      inputs[i + 1].focus()
+    })
+  })
 
   form.addEventListener('submit', (e) => {
     e.preventDefault()
@@ -101,6 +120,7 @@ export function openInquiry(product) {
       if (problems.includes('a valid email')) form.querySelector('[name=email]').closest('.field').classList.add('is-invalid')
       error.textContent = `Please enter ${problems.join(' and ')}.`
       error.hidden = false
+      form.querySelector('.field.is-invalid input')?.focus()
       return
     }
 

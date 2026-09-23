@@ -52,20 +52,46 @@ export function logo(brand, { onTap } = {}) {
 }
 
 /**
- * Product image with a designed placeholder when the file is absent.
+ * Cover media markup for a product: a silent looping video when `video` is
+ * set (with `image` as the poster), otherwise a plain image.
+ */
+export function media(product, cls = '', alt = '') {
+  if (product.video) {
+    return `<video class="${cls}" src="${product.video}" poster="${product.image}" autoplay muted loop playsinline disablepictureinpicture aria-label="${alt}"></video>`
+  }
+  return `<img class="${cls}" src="${product.image}" alt="${alt}" draggable="false" />`
+}
+
+/**
+ * Product image/video with a designed placeholder when the file is absent.
  * Keeps the layout identical either way.
  */
 export function figure(product) {
   const fig = el(
     `<figure class="hero" data-icon="${product.icon}">
-       <img src="${product.image}" alt="${product.name}" draggable="false" />
+       ${media(product, 'hero__media', product.name)}
        <div class="hero__fallback">${icon(product.icon)}<span>${product.name}</span></div>
      </figure>`,
   )
-  const img = fig.querySelector('img')
-  img.addEventListener('error', () => fig.classList.add('is-fallback'), { once: true })
-  img.addEventListener('load', () => fig.classList.add('is-loaded'), { once: true })
+  const node = fig.querySelector('.hero__media')
+  const ready = node.tagName === 'VIDEO' ? 'loadeddata' : 'load'
+  node.addEventListener('error', () => fig.classList.add('is-fallback'), { once: true })
+  node.addEventListener(ready, () => fig.classList.add('is-loaded'), { once: true })
   return fig
+}
+
+/**
+ * Toggle `is-scrollable` on a scroll container while there is more content
+ * below the fold, so CSS can fade its bottom edge as a hint.
+ */
+export function scrollFade(node) {
+  if (!node) return
+  const update = () => {
+    const more = node.scrollHeight - node.clientHeight - node.scrollTop > 4
+    node.classList.toggle('is-scrollable', more)
+  }
+  node.addEventListener('scroll', update, { passive: true })
+  new ResizeObserver(update).observe(node)
 }
 
 const qrCache = new Map()

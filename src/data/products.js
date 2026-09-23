@@ -4,10 +4,19 @@
  * - `image` paths are relative to /public. Drop a 16:10-ish JPG in
  *   /public/products/ and reference it here. If the file is missing the
  *   kiosk shows a styled placeholder instead of a broken image.
+ * - `video` (optional) is a short muted MP4 loop; `image` becomes its poster.
+ *   Cover media sources: A&D / Mesutronic product photos (OEM partners),
+ *   Pexels photos and Mixkit clips (both free for commercial use).
  * - `url` is what the QR code points to.
- * - `tile` controls the home-screen grid: `wide` tiles take 7/10 columns,
- *   `narrow` tiles take 3/10, `half` tiles take 5/10. Rows must add up to 10.
+ * - The home screen shows `categories`. Every product has a `category` that
+ *   must match one of their ids. Tapping a category with one product opens
+ *   that product directly; with several it opens a grid of them.
+ * - `tile` controls the tile grid (home for categories, category screen for
+ *   products): `wide` tiles take 7/10 columns, `narrow` 3/10, `half` 5/10,
+ *   `full` 10/10. Rows must add up to 10.
  * - `partner` (optional) is the OEM whose technology the product is built on.
+ * - `eyebrow` on a product is the short label on its tile in the category
+ *   grid; on the info screen the category name is shown instead.
  * - `facts` are 3–4 headline specs shown as stat blocks.
  * - `range` is a list of groups, each with `title` (optional) and `items`
  *   of `{ name, note }`. Model codes, conveyor types, applications, etc.
@@ -23,12 +32,152 @@ export const brand = {
   tagline: 'Inspect. Convey. Automate.',
 }
 
+/**
+ * Content for the About screen (#/about). Short sections behind a switcher;
+ * each section may have `text`, `points`, `stats`, `chips` and/or `contact`.
+ */
+export const about = {
+  company: 'Safesurge Inspection Technologies Pvt. Ltd.',
+  eyebrow: 'About us',
+  sections: [
+    {
+      id: 'overview',
+      label: 'Overview',
+      image: '/products/x-ray.jpg',
+      title: 'Inspection technology, engineered for your line.',
+      text: 'An Indian industrial inspection and automation company. We deliver quality inspection and end-of-line automation for food, FMCG, pharma, packaging and manufacturing plants.',
+      stats: [
+        { value: '500+', label: 'Installations' },
+        { value: '5', label: 'Industries' },
+        { value: 'ISO 9001', label: 'Certified' },
+        { value: 'India', label: 'Built in' },
+      ],
+      chips: {
+        title: 'What we build',
+        items: ['AI Vision Inspection', 'Metal Detection', 'Checkweighing', 'X-Ray Inspection', 'End-of-line Automation'],
+      },
+    },
+    {
+      id: 'vision',
+      label: 'Vision Inspection',
+      image: '/products/vision.jpg',
+      title: 'AI that sees every defect, in real time.',
+      points: [
+        'Spots product defects and packaging abnormalities on the line.',
+        'Flags missing or misplaced components before they ship.',
+        'Cuts dependence on manual inspection; keeps quality consistent.',
+      ],
+      chips: {
+        title: 'Industries',
+        items: ['Food Processing', 'FMCG', 'Pharmaceutical', 'Packaging', 'Manufacturing'],
+      },
+    },
+    {
+      id: 'approach',
+      label: 'How we work',
+      image: '/products/checkweighers.jpg',
+      title: 'Built around your product and process.',
+      points: [
+        'We start with your production challenges, not a catalogue.',
+        'Feasibility trials on your actual product before you commit.',
+        'Solutions engineered to integrate into your existing line.',
+      ],
+      stats: [
+        { value: '500+', label: 'Successful installations' },
+        { value: 'Scalable', label: 'Practical, reliable systems' },
+      ],
+    },
+    {
+      id: 'contact',
+      label: 'Contact',
+      image: '/products/case-packing.jpg',
+      title: 'Let\u2019s talk about your line.',
+      contact: {
+        address: 'Plot 107, Sector 4, IMT Manesar, Gurugram, Haryana 122050',
+        phone: '+91 124 426 2612',
+        email: 'sales@safesurgeindia.com',
+        web: 'safesurge.co.in',
+      },
+    },
+  ],
+}
+
+/**
+ * Top-level categories shown on the home screen, in display order.
+ * `blurb` is the one-liner under the title on the category screen.
+ */
+export const categories = [
+  // ---- Row 1: 5 + 5 ------------------------------------------------------
+  {
+    id: 'material-handling',
+    name: 'Conveyors & Material Handling',
+    eyebrow: 'Belt \u00b7 Spiral \u00b7 Screw',
+    blurb: 'Food-grade conveying built in India, engineered so inspection drops straight in.',
+    icon: 'conveyor',
+    tile: 'half',
+    image: '/products/conveyors.jpg',
+    video: '/products/conveyors.mp4',
+  },
+  {
+    id: 'inspection',
+    name: 'Inspection & Quality Control',
+    eyebrow: 'Weigh \u00b7 Detect \u00b7 X-ray',
+    blurb: 'Catch off-weight packs and foreign bodies before they leave the line.',
+    icon: 'shield',
+    tile: 'half',
+    image: '/products/checkweighers.jpg',
+  },
+
+  // ---- Row 2: 3 + 7 ------------------------------------------------------
+  {
+    id: 'turnkey',
+    name: 'Industry 5.0 & Turnkey Automation',
+    eyebrow: 'Complete lines',
+    blurb: 'Process equipment and whole-line integration, designed around your product.',
+    icon: 'gear',
+    tile: 'narrow',
+    image: '/products/process.jpg',
+  },
+  {
+    id: 'end-of-line',
+    name: 'End of Line Automation',
+    eyebrow: 'Secondary packaging',
+    blurb: 'Case forming, packing and sealing for a hands-free end of line.',
+    icon: 'box',
+    tile: 'wide',
+    image: '/products/case-packing.jpg',
+    video: '/products/case-packing.mp4',
+  },
+
+  // ---- Row 3: 7 + 3 ------------------------------------------------------
+  {
+    id: 'robotics',
+    name: 'Robotics',
+    eyebrow: 'Pack \u00b7 Pick \u00b7 Palletise',
+    blurb: 'Robotic cells for the repetitive, heavy work at the end of the line.',
+    icon: 'robot',
+    tile: 'wide',
+    image: '/products/robotics.jpg',
+    video: '/products/robotics.mp4',
+  },
+  {
+    id: 'vision',
+    name: 'AI-Powered Vision',
+    eyebrow: 'Camera inspection',
+    blurb: 'Camera-based inspection with AI models trained on your product.',
+    icon: 'eye',
+    tile: 'narrow',
+    image: '/products/vision.jpg',
+  },
+]
+
 export const products = [
-  // ---- Row 1: 7 + 3 ------------------------------------------------------
+  // ==== Inspection & Quality Control (grid rows: 7 + 3, 5 + 5, 10) ========
   {
     id: 'checkweighers',
     name: 'Checkweighers',
-    eyebrow: 'Inspection',
+    category: 'inspection',
+    eyebrow: 'In-motion weighing',
     partner: 'A&D Company, Japan',
     icon: 'weight',
     tile: 'wide',
@@ -76,7 +225,8 @@ export const products = [
   {
     id: 'metal-detectors',
     name: 'Metal Detectors',
-    eyebrow: 'Inspection',
+    category: 'inspection',
+    eyebrow: 'Tunnel detection',
     partner: 'Mesutronic, Germany',
     icon: 'magnet',
     tile: 'narrow',
@@ -110,11 +260,11 @@ export const products = [
     ],
   },
 
-  // ---- Row 2: 5 + 5 ------------------------------------------------------
   {
     id: 'metal-separators',
     name: 'Metal Separators',
-    eyebrow: 'Inspection \u00b7 Bulk & pipeline',
+    category: 'inspection',
+    eyebrow: 'Bulk & pipeline',
     partner: 'Mesutronic, Germany',
     icon: 'funnel',
     tile: 'half',
@@ -149,6 +299,7 @@ export const products = [
   {
     id: 'combi',
     name: 'Combi',
+    category: 'inspection',
     eyebrow: 'Checkweigher + Metal Detector',
     partner: 'A&D \u00b7 Mesutronic',
     icon: 'layers',
@@ -173,14 +324,14 @@ export const products = [
     ],
   },
 
-  // ---- Row 3: 3 + 7 ------------------------------------------------------
   {
     id: 'x-ray',
     name: 'X-Ray',
-    eyebrow: 'Inspection',
+    category: 'inspection',
+    eyebrow: 'Foreign body & fill',
     partner: 'Mesutronic, Germany',
     icon: 'xray',
-    tile: 'narrow',
+    tile: 'full',
     image: '/products/x-ray.jpg',
     url: 'https://safesurge.co.in/x-ray/',
     description:
@@ -201,13 +352,17 @@ export const products = [
       },
     ],
   },
+
+  // ==== Conveyors & Material Handling =====================================
   {
     id: 'conveyors',
     name: 'Conveyors',
+    category: 'material-handling',
     eyebrow: 'Material handling',
     icon: 'conveyor',
-    tile: 'wide',
+    tile: 'full',
     image: '/products/conveyors.jpg',
+    video: '/products/conveyors.mp4',
     url: 'https://safesurge.co.in/product/spiral-conveyor-system/',
     description:
       'Food-grade belt, modular and screw conveyors manufactured in India and engineered with metal-free zones so detectors drop straight in. From a single straight section to complete multi-floor spiral systems, each line is sized to your product, speed and layout.',
@@ -235,13 +390,14 @@ export const products = [
     ],
   },
 
-  // ---- Row 4: 5 + 5 ------------------------------------------------------
+  // ==== AI-Powered Vision =================================================
   {
     id: 'vision',
     name: 'AI-powered Vision',
+    category: 'vision',
     eyebrow: 'Quality inspection',
     icon: 'eye',
-    tile: 'half',
+    tile: 'full',
     image: '/products/vision.jpg',
     url: 'https://safesurge.co.in/product-category/inspection-systems/vision-inspection/',
     description:
@@ -266,13 +422,17 @@ export const products = [
       },
     ],
   },
+
+  // ==== Robotics ==========================================================
   {
     id: 'robotics',
     name: 'Robotics',
-    eyebrow: 'End-of-line automation',
+    category: 'robotics',
+    eyebrow: 'Robotic cells',
     icon: 'robot',
-    tile: 'half',
+    tile: 'full',
     image: '/products/robotics.jpg',
+    video: '/products/robotics.mp4',
     url: 'https://safesurge.co.in/',
     description:
       'Robotic cells that take over the repetitive, heavy work at the end of the line: loading packs into cases, picking and placing product, and stacking finished cases onto pallets. Integrated with our conveyors, checkweighers and vision so only good product reaches the pallet.',
@@ -292,14 +452,16 @@ export const products = [
     ],
   },
 
-  // ---- Row 5: 7 + 3 ------------------------------------------------------
+  // ==== End of Line Automation ============================================
   {
     id: 'case-packing',
     name: 'Case Erectors & Sealers',
+    category: 'end-of-line',
     eyebrow: 'Secondary packaging',
     icon: 'box',
-    tile: 'wide',
+    tile: 'full',
     image: '/products/case-packing.jpg',
+    video: '/products/case-packing.mp4',
     url: 'https://safesurge.co.in/',
     description:
       'Automatic case erectors form and bottom-seal corrugated boxes on demand; case sealers close the top with tape or hot-melt after packing. Sized to your case range and paired with our robotic box packers for a hands-free end of line.',
@@ -317,12 +479,15 @@ export const products = [
       },
     ],
   },
+
+  // ==== Industry 5.0 & Turnkey Automation =================================
   {
     id: 'process',
     name: 'Process Machines',
-    eyebrow: 'Processing',
+    category: 'turnkey',
+    eyebrow: 'Custom process equipment',
     icon: 'gear',
-    tile: 'narrow',
+    tile: 'full',
     image: '/products/process.jpg',
     url: 'https://safesurge.co.in/',
     description:
@@ -335,3 +500,14 @@ export const products = [
     range: [],
   },
 ]
+
+/** Products belonging to a category, in `products` order. */
+export const productsIn = (category) => products.filter((p) => p.category === category.id)
+
+if (import.meta.env?.DEV) {
+  for (const p of products) {
+    if (!categories.some((c) => c.id === p.category)) {
+      console.warn(`[kiosk] product "${p.id}" has unknown category "${p.category}"`)
+    }
+  }
+}
