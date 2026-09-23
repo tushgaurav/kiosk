@@ -68,7 +68,7 @@ export function openInquiry(product) {
          <div class="success" hidden>
            <div class="success__mark">${icon('check')}</div>
            <h3>Thanks, we'll be in touch.</h3>
-           <p>A ${product.name.toLowerCase()} specialist will reach out shortly.</p>
+           <p>Our ${product.name} team will reach out shortly.</p>
          </div>
        </div>
      </div>`,

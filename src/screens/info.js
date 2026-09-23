@@ -10,6 +10,7 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
        </header>
 
        <div class="info__title">
+         <p class="eyebrow info__eyebrow">${product.eyebrow}${product.partner ? `<span class="info__partner">${product.partner}</span>` : ''}</p>
          <h1 class="title">${product.name}</h1>
        </div>
 
@@ -19,7 +20,10 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
          <p class="lede">${product.description}</p>
          <div class="qr">
            <div class="qr__code" aria-busy="true"></div>
+           <span class="qr__hint">Scan for details</span>
          </div>
+         ${facts(product.facts)}
+         ${range(product.range)}
        </div>
 
        <footer class="info__footer">
@@ -37,6 +41,17 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
 
   const qr = screen.querySelector('.qr__code')
   mountQr(qr, product.url).then(() => qr.removeAttribute('aria-busy'))
+
+  // Fade the bottom edge of the range list only while there is more to scroll.
+  const list = screen.querySelector('.range')
+  if (list) {
+    const update = () => {
+      const more = list.scrollHeight - list.clientHeight - list.scrollTop > 4
+      list.classList.toggle('is-scrollable', more)
+    }
+    list.addEventListener('scroll', update, { passive: true })
+    new ResizeObserver(update).observe(list)
+  }
 
   screen.querySelector('.iconbtn--home').addEventListener('click', onHome)
   screen.querySelector('.iconbtn--prev').addEventListener('click', onPrev)
@@ -63,4 +78,35 @@ export function renderInfo({ brand, product, onHome, onPrev, onNext, onInquire }
   screen.addEventListener('pointercancel', () => (startX = startY = null))
 
   return screen
+}
+
+/** Headline specs as a row of stat blocks. */
+function facts(items = []) {
+  if (!items.length) return ''
+  return `<dl class="facts">${items
+    .map((f) => `<div class="fact"><dt>${f.label}</dt><dd>${f.value}</dd></div>`)
+    .join('')}</dl>`
+}
+
+/** Model / variant list, optionally grouped. Scrolls if it outgrows the screen. */
+function range(groups = []) {
+  const withItems = groups.filter((g) => g.items?.length)
+  if (!withItems.length) return ''
+  return `<div class="range">${withItems
+    .map(
+      (g) => `<section class="range__group">
+        ${g.title ? `<h2 class="range__title">${g.title}</h2>` : ''}
+        <ul class="range__list" role="list">
+          ${g.items
+            .map(
+              (it) => `<li class="range__item">
+                <span class="range__name">${it.name}</span>
+                ${it.note ? `<span class="range__note">${it.note}</span>` : ''}
+              </li>`,
+            )
+            .join('')}
+        </ul>
+      </section>`,
+    )
+    .join('')}</div>`
 }
