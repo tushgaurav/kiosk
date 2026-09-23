@@ -8,15 +8,9 @@
  *   Cover media sources: A&D / Mesutronic product photos (OEM partners),
  *   Pexels photos and Mixkit clips (both free for commercial use).
  * - `url` is what the QR code points to.
- * - The home screen shows `categories`. Every product has a `category` that
- *   must match one of their ids. Tapping a category with one product opens
- *   that product directly; with several it opens a grid of them.
- * - `tile` controls the tile grid (home for categories, category screen for
- *   products): `wide` tiles take 7/10 columns, `narrow` 3/10, `half` 5/10,
- *   `full` 10/10. Rows must add up to 10.
+ * - `tile` controls the home-screen grid: `wide` tiles take 7/10 columns,
+ *   `narrow` tiles take 3/10, `half` tiles take 5/10. Rows must add up to 10.
  * - `partner` (optional) is the OEM whose technology the product is built on.
- * - `eyebrow` on a product is the short label on its tile in the category
- *   grid; on the info screen the category name is shown instead.
  * - `facts` are 3–4 headline specs shown as stat blocks.
  * - `range` is a list of groups, each with `title` (optional) and `items`
  *   of `{ name, note }`. Model codes, conveyor types, applications, etc.
@@ -102,82 +96,12 @@ export const about = {
   ],
 }
 
-/**
- * Top-level categories shown on the home screen, in display order.
- * `blurb` is the one-liner under the title on the category screen.
- */
-export const categories = [
-  // ---- Row 1: 5 + 5 ------------------------------------------------------
-  {
-    id: 'material-handling',
-    name: 'Conveyors & Material Handling',
-    eyebrow: 'Belt \u00b7 Spiral \u00b7 Screw',
-    blurb: 'Food-grade conveying built in India, engineered so inspection drops straight in.',
-    icon: 'conveyor',
-    tile: 'half',
-    image: '/products/conveyors.jpg',
-    video: '/products/conveyors.mp4',
-  },
-  {
-    id: 'inspection',
-    name: 'Inspection & Quality Control',
-    eyebrow: 'Weigh \u00b7 Detect \u00b7 X-ray',
-    blurb: 'Catch off-weight packs and foreign bodies before they leave the line.',
-    icon: 'shield',
-    tile: 'half',
-    image: '/products/checkweighers.jpg',
-  },
-
-  // ---- Row 2: 3 + 7 ------------------------------------------------------
-  {
-    id: 'turnkey',
-    name: 'Industry 5.0 & Turnkey Automation',
-    eyebrow: 'Complete lines',
-    blurb: 'Process equipment and whole-line integration, designed around your product.',
-    icon: 'gear',
-    tile: 'narrow',
-    image: '/products/process.jpg',
-  },
-  {
-    id: 'end-of-line',
-    name: 'End of Line Automation',
-    eyebrow: 'Secondary packaging',
-    blurb: 'Case forming, packing and sealing for a hands-free end of line.',
-    icon: 'box',
-    tile: 'wide',
-    image: '/products/case-packing.jpg',
-    video: '/products/case-packing.mp4',
-  },
-
-  // ---- Row 3: 7 + 3 ------------------------------------------------------
-  {
-    id: 'robotics',
-    name: 'Robotics',
-    eyebrow: 'Pack \u00b7 Pick \u00b7 Palletise',
-    blurb: 'Robotic cells for the repetitive, heavy work at the end of the line.',
-    icon: 'robot',
-    tile: 'wide',
-    image: '/products/robotics.jpg',
-    video: '/products/robotics.mp4',
-  },
-  {
-    id: 'vision',
-    name: 'AI-Powered Vision',
-    eyebrow: 'Camera inspection',
-    blurb: 'Camera-based inspection with AI models trained on your product.',
-    icon: 'eye',
-    tile: 'narrow',
-    image: '/products/vision.jpg',
-  },
-]
-
 export const products = [
-  // ==== Inspection & Quality Control (grid rows: 7 + 3, 5 + 5, 10) ========
+  // ---- Row 1: 7 + 3 ------------------------------------------------------
   {
     id: 'checkweighers',
     name: 'Checkweighers',
-    category: 'inspection',
-    eyebrow: 'In-motion weighing',
+    eyebrow: 'Inspection',
     partner: 'A&D Company, Japan',
     icon: 'weight',
     tile: 'wide',
@@ -225,8 +149,7 @@ export const products = [
   {
     id: 'metal-detectors',
     name: 'Metal Detectors',
-    category: 'inspection',
-    eyebrow: 'Tunnel detection',
+    eyebrow: 'Inspection',
     partner: 'Mesutronic, Germany',
     icon: 'magnet',
     tile: 'narrow',
@@ -260,11 +183,11 @@ export const products = [
     ],
   },
 
+  // ---- Row 2: 5 + 5 ------------------------------------------------------
   {
     id: 'metal-separators',
     name: 'Metal Separators',
-    category: 'inspection',
-    eyebrow: 'Bulk & pipeline',
+    eyebrow: 'Inspection \u00b7 Bulk & pipeline',
     partner: 'Mesutronic, Germany',
     icon: 'funnel',
     tile: 'half',
@@ -299,7 +222,6 @@ export const products = [
   {
     id: 'combi',
     name: 'Combi',
-    category: 'inspection',
     eyebrow: 'Checkweigher + Metal Detector',
     partner: 'A&D \u00b7 Mesutronic',
     icon: 'layers',
@@ -324,14 +246,14 @@ export const products = [
     ],
   },
 
+  // ---- Row 3: 3 + 7 ------------------------------------------------------
   {
     id: 'x-ray',
     name: 'X-Ray',
-    category: 'inspection',
-    eyebrow: 'Foreign body & fill',
+    eyebrow: 'Inspection',
     partner: 'Mesutronic, Germany',
     icon: 'xray',
-    tile: 'full',
+    tile: 'narrow',
     image: '/products/x-ray.jpg',
     url: 'https://safesurge.co.in/x-ray/',
     description:
@@ -352,15 +274,12 @@ export const products = [
       },
     ],
   },
-
-  // ==== Conveyors & Material Handling =====================================
   {
     id: 'conveyors',
     name: 'Conveyors',
-    category: 'material-handling',
     eyebrow: 'Material handling',
     icon: 'conveyor',
-    tile: 'full',
+    tile: 'wide',
     image: '/products/conveyors.jpg',
     video: '/products/conveyors.mp4',
     url: 'https://safesurge.co.in/product/spiral-conveyor-system/',
@@ -390,14 +309,13 @@ export const products = [
     ],
   },
 
-  // ==== AI-Powered Vision =================================================
+  // ---- Row 4: 5 + 5 ------------------------------------------------------
   {
     id: 'vision',
     name: 'AI-powered Vision',
-    category: 'vision',
     eyebrow: 'Quality inspection',
     icon: 'eye',
-    tile: 'full',
+    tile: 'half',
     image: '/products/vision.jpg',
     url: 'https://safesurge.co.in/product-category/inspection-systems/vision-inspection/',
     description:
@@ -422,15 +340,12 @@ export const products = [
       },
     ],
   },
-
-  // ==== Robotics ==========================================================
   {
     id: 'robotics',
     name: 'Robotics',
-    category: 'robotics',
-    eyebrow: 'Robotic cells',
+    eyebrow: 'End-of-line automation',
     icon: 'robot',
-    tile: 'full',
+    tile: 'half',
     image: '/products/robotics.jpg',
     video: '/products/robotics.mp4',
     url: 'https://safesurge.co.in/',
@@ -452,14 +367,13 @@ export const products = [
     ],
   },
 
-  // ==== End of Line Automation ============================================
+  // ---- Row 5: 7 + 3 ------------------------------------------------------
   {
     id: 'case-packing',
     name: 'Case Erectors & Sealers',
-    category: 'end-of-line',
     eyebrow: 'Secondary packaging',
     icon: 'box',
-    tile: 'full',
+    tile: 'wide',
     image: '/products/case-packing.jpg',
     video: '/products/case-packing.mp4',
     url: 'https://safesurge.co.in/',
@@ -479,15 +393,12 @@ export const products = [
       },
     ],
   },
-
-  // ==== Industry 5.0 & Turnkey Automation =================================
   {
     id: 'process',
     name: 'Process Machines',
-    category: 'turnkey',
-    eyebrow: 'Custom process equipment',
+    eyebrow: 'Processing',
     icon: 'gear',
-    tile: 'full',
+    tile: 'narrow',
     image: '/products/process.jpg',
     url: 'https://safesurge.co.in/',
     description:
@@ -500,14 +411,3 @@ export const products = [
     range: [],
   },
 ]
-
-/** Products belonging to a category, in `products` order. */
-export const productsIn = (category) => products.filter((p) => p.category === category.id)
-
-if (import.meta.env?.DEV) {
-  for (const p of products) {
-    if (!categories.some((c) => c.id === p.category)) {
-      console.warn(`[kiosk] product "${p.id}" has unknown category "${p.category}"`)
-    }
-  }
-}
