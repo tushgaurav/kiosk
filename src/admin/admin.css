@@ -1,0 +1,614 @@
+/* ==========================================================================
+   SafeSurge Kiosk — Leads admin
+   A plain desktop page (no kiosk hardening) in the kiosk's visual language.
+   ========================================================================== */
+
+:root {
+  --ink: #141414;
+  --ink-2: #4a4a4a;
+  --muted: #7d7d7a;
+  --line: #e1e1de;
+  --surface: #eeeeeb;
+  --surface-2: #e3e3df;
+  --paper: #ffffff;
+  --red: #e2231a;
+  --red-deep: #b9170f;
+
+  --radius: 8px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Geist Variable', 'Geist', system-ui, sans-serif;
+  font-feature-settings: 'ss01', 'cv11';
+  font-size: 15px;
+  line-height: 1.45;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.admin {
+  min-height: 100dvh;
+  border-top: 6px solid var(--red);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: 2px;
+}
+
+a {
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.logo img {
+  display: block;
+  height: 34px;
+  width: auto;
+}
+
+.wordmark {
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-size: 1.15rem;
+  color: #5c5c5c;
+}
+
+.wordmark b {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   Controls
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  transition:
+    transform 0.16s var(--ease-out),
+    background-color 0.16s,
+    box-shadow 0.16s;
+}
+
+.btn:hover {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+.btn:active {
+  transform: scale(0.975);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.btn--primary {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.btn--primary:hover {
+  background: #000;
+  box-shadow: none;
+}
+
+.btn--ghost {
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+}
+
+.btn--ghost:hover {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.btn--block {
+  width: 100%;
+  min-height: 46px;
+}
+
+.field {
+  display: grid;
+  gap: 0.4em;
+  text-align: left;
+}
+
+.field__label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.field input:focus {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+/* --------------------------------------------------------------------------
+   Sign in
+   -------------------------------------------------------------------------- */
+
+.login {
+  min-height: calc(100dvh - 6px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login__card {
+  width: min(100%, 380px);
+  display: grid;
+  gap: 18px;
+  padding: 36px 32px 32px;
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 0 var(--line),
+    0 24px 60px -30px rgba(20, 20, 20, 0.35);
+}
+
+.login__brand {
+  margin-bottom: 8px;
+}
+
+.login__title {
+  margin: -12px 0 6px;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.login__error {
+  margin: -6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--red);
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard
+   -------------------------------------------------------------------------- */
+
+.page {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 36px 64px;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 22px;
+}
+
+.head__brand {
+  padding-right: 28px;
+  border-right: 1.5px solid var(--line);
+}
+
+.head__title h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.head__meta {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.head__count {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.head__count::after {
+  content: ' ' attr(data-unit);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.head__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.head__status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2fa35c;
+}
+
+.head__status.is-offline {
+  color: var(--red);
+}
+
+.head__status.is-offline::before {
+  background: var(--red);
+}
+
+.head__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  color: var(--muted);
+  transition: box-shadow 0.15s;
+}
+
+.search:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--ink);
+}
+
+.search input {
+  width: 240px;
+  border: 0;
+  outline: none;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+}
+
+.search input::placeholder {
+  color: #a9a9a5;
+}
+
+.search input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* Table */
+
+.table-wrap {
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 var(--line);
+  overflow: auto;
+}
+
+.leads {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.leads th,
+.leads td {
+  padding: 14px 18px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.leads th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-top: 16px;
+  padding-bottom: 12px;
+  background: var(--paper);
+  border-bottom: 1.5px solid var(--line);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.leads th:first-child,
+.leads td:first-child {
+  padding-left: 24px;
+}
+
+.leads th:last-child,
+.leads td:last-child {
+  padding-right: 16px;
+}
+
+.leads tbody tr {
+  border-bottom: 1px solid var(--line);
+  transition:
+    background-color 0.12s,
+    opacity 0.2s;
+}
+
+.leads tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.leads tbody tr:hover {
+  background: #f7f7f5;
+}
+
+.leads tbody tr.is-removing {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.leads__when time {
+  display: grid;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.leads__when time span {
+  color: var(--muted);
+}
+
+.leads__who {
+  min-width: 160px;
+}
+
+.leads__who strong {
+  display: block;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.leads__who span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.leads__company {
+  min-width: 140px;
+}
+
+.leads__contact a {
+  display: block;
+  text-decoration: none;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.leads__contact a:hover {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.leads__contact a + a {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.leads__where {
+  min-width: 120px;
+  color: var(--ink-2);
+}
+
+.dash {
+  color: #b9b9b5;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.leads__tools {
+  width: 1%;
+  text-align: right;
+}
+
+.rowbtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.95rem;
+  opacity: 0;
+  transition:
+    opacity 0.12s,
+    background-color 0.12s,
+    color 0.12s;
+}
+
+.leads tbody tr:hover .rowbtn,
+.rowbtn:focus-visible {
+  opacity: 1;
+}
+
+/* No hover on touch screens — keep the control visible. */
+@media (hover: none) {
+  .rowbtn {
+    opacity: 1;
+  }
+}
+
+.rowbtn:hover {
+  background: var(--surface-2);
+  color: var(--red);
+}
+
+.empty {
+  padding: 72px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.empty p {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Narrow screens
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .head {
+    grid-template-columns: auto auto 1fr;
+  }
+
+  .head__actions {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+
+  .search {
+    flex: 1 1 240px;
+  }
+
+  .search input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 48px;
+  }
+
+  .head {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .head__brand {
+    padding-right: 0;
+    border-right: 0;
+  }
+}

@@ -1,6 +1,7 @@
 import { el, icon, mountQr } from './ui.js'
 
-const STORAGE_KEY = 'safesurge:leads'
+const API = '/api/leads'
+const PENDING_KEY = 'safesurge:pending-leads'
 const SUCCESS_MS = 4500
 
 let current = null
@@ -17,8 +18,9 @@ export function closeInquiry() {
 }
 
 /**
- * Bottom-sheet lead form. Leads are persisted to localStorage so staff can
- * export them from the kiosk later (see window.safesurgeLeads()).
+ * Bottom-sheet lead form. Leads are posted to the kiosk server (SQLite) and
+ * reviewed at /admin. If the server can't be reached the lead is queued in
+ * localStorage and retried later — the visitor still sees the thank-you.
  */
 export function openInquiry(product) {
   closeInquiry()
@@ -43,6 +45,10 @@ export function openInquiry(product) {
                <input name="name" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" required placeholder="Jane Smith" />
              </label>
              <label class="field">
+               <span class="field__label">Designation</span>
+               <input name="designation" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" placeholder="Plant Head" />
+             </label>
+             <label class="field field--wide">
                <span class="field__label">Company</span>
                <input name="company" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" placeholder="Acme Manufacturing" />
              </label>
@@ -52,7 +58,15 @@ export function openInquiry(product) {
              </label>
              <label class="field">
                <span class="field__label">Phone</span>
-               <input name="phone" type="tel" autocomplete="off" inputmode="tel" enterkeyhint="send" placeholder="+91 98765 43210" />
+               <input name="phone" type="tel" autocomplete="off" inputmode="tel" enterkeyhint="next" placeholder="+91 98765 43210" />
+             </label>
+             <label class="field">
+               <span class="field__label">City</span>
+               <input name="city" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="next" placeholder="Pune" />
+             </label>
+             <label class="field">
+               <span class="field__label">State</span>
+               <input name="state" type="text" autocomplete="off" autocapitalize="words" enterkeyhint="send" placeholder="Maharashtra" />
              </label>
            </div>
            <p class="form__error" role="alert" hidden></p>
@@ -107,8 +121,13 @@ export function openInquiry(product) {
     })
   })
 
-  form.addEventListener('submit', (e) => {
+  const submit = form.querySelector('.cta--submit')
+  const submitLabel = submit.firstElementChild
+  let busy = false
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault()
+    if (busy) return
     const data = Object.fromEntries(new FormData(form))
     const problems = []
     if (!data.name.trim()) problems.push('name')
@@ -124,7 +143,22 @@ export function openInquiry(product) {
       return
     }
 
-    saveLead({ ...data, product: product.id, at: new Date().toISOString() })
+    busy = true
+    submit.disabled = true
+    submitLabel.textContent = 'Sending…'
+    inputs.forEach((i) => i.blur())
+
+    const result = await sendLead({ ...data, product: product.id, product_name: product.name, client_id: uid() })
+
+    if (!result.ok) {
+      busy = false
+      submit.disabled = false
+      submitLabel.textContent = 'Send Inquiry'
+      error.textContent = result.error
+      error.hidden = false
+      return
+    }
+
     form.hidden = true
     sheet.querySelector('.success').hidden = false
     sheet.classList.add('is-done')
@@ -136,26 +170,81 @@ export function openInquiry(product) {
   return sheet
 }
 
-function saveLead(lead) {
+// ---- Persistence -----------------------------------------------------------
+
+/** Unique id per submission so a retried request can never create a duplicate. */
+function uid() {
+  return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+async function post(lead) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(lead),
+  })
+}
+
+/**
+ * Send a lead to the server. Resolves `{ ok: true }` when stored (or safely
+ * queued for retry), `{ ok: false, error }` when the server rejected it.
+ */
+async function sendLead(lead) {
   try {
-    const leads = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    leads.push(lead)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads))
-  } catch (err) {
-    console.warn('Could not persist lead', err, lead)
+    const res = await post(lead)
+    if (res.ok) {
+      flushPendingLeads()
+      return { ok: true }
+    }
+    if (res.status < 500) {
+      const body = await res.json().catch(() => ({}))
+      return { ok: false, error: body.error || 'Something went wrong. Please try again.' }
+    }
+  } catch {
+    // Network failure — fall through to the queue.
+  }
+  queuePending(lead)
+  return { ok: true, queued: true }
+}
+
+function readPending() {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]')
+  } catch {
+    return []
   }
 }
 
-/** Staff helper: run `safesurgeLeads()` in DevTools to download a CSV. */
-export function installLeadExport() {
-  window.safesurgeLeads = () => {
-    const leads = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    const cols = ['at', 'product', 'name', 'company', 'email', 'phone']
-    const csv = [cols.join(','), ...leads.map((l) => cols.map((c) => JSON.stringify(l[c] ?? '')).join(','))].join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `safesurge-leads-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    return leads
+function writePending(list) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(list))
+  } catch (err) {
+    console.warn('Could not persist pending lead', err)
+  }
+}
+
+function queuePending(lead) {
+  writePending([...readPending(), lead])
+}
+
+let flushing = false
+
+/** Retry leads that were captured while the server was unreachable. */
+export async function flushPendingLeads() {
+  if (flushing || readPending().length === 0) return
+  flushing = true
+  try {
+    for (const lead of readPending()) {
+      const res = await post(lead)
+      // Server-side trouble: stop and try again later.
+      if (res.status >= 500) break
+      // Stored — or rejected as invalid, which a retry can never fix.
+      if (!res.ok) console.warn('Dropping invalid queued lead', lead, await res.text())
+      writePending(readPending().filter((l) => l.client_id !== lead.client_id))
+    }
+  } catch {
+    // Still offline; leave the queue for next time.
+  } finally {
+    flushing = false
   }
 }

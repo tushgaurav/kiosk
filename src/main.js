@@ -6,7 +6,7 @@ import { about, brand, categories, products } from './data/products.js'
 import { renderAbout } from './screens/about.js'
 import { renderHome } from './screens/home.js'
 import { renderInfo } from './screens/info.js'
-import { closeInquiry, installLeadExport, openInquiry } from './components/inquiry.js'
+import { closeInquiry, flushPendingLeads, openInquiry } from './components/inquiry.js'
 
 /** Return to the attract screen after this much inactivity. */
 const IDLE_MS = 75_000
@@ -148,7 +148,11 @@ window.addEventListener('keydown', (e) => {
   }
 })
 
-installLeadExport()
+// Leads captured while the server was down get another chance now and
+// periodically; the call is a no-op when nothing is queued.
+flushPendingLeads()
+setInterval(flushPendingLeads, 60_000)
+
 Object.assign(state, readHash())
 writeHash()
 draw()
