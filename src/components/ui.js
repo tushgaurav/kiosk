@@ -21,7 +21,9 @@ const ICONS = {
   box: `<path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>`,
   monitor: `<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8"/><path d="M12 16v4"/><path d="M7 12.5l3-3 2.5 2 4.5-4.5"/>`,
   gear: `<circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.9 4.9L7 7"/><path d="M17 17l2.1 2.1"/><path d="M4.9 19.1L7 17"/><path d="M17 7l2.1-2.1"/>`,
-  home: `<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>`,
+  // Solid glyphs for the round top-bar buttons (Home, About us).
+  home: `<path d="M10 20.5v-6h4v6h5.5v-9h3L12 2.5 1.5 11.5h3v9z" fill="currentColor" stroke="none"/>`,
+  info: `<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1.15 15.5h-2.3v-7h2.3v7zm0-9h-2.3V6.2h2.3v2.3z" fill="currentColor" fill-rule="evenodd" stroke="none"/>`,
   prev: `<path d="M15 5l-7 7 7 7"/>`,
   next: `<path d="M9 5l7 7-7 7"/>`,
   arrow: `<path d="M7 17L17 7"/><path d="M8 7h9v9"/>`,
@@ -31,6 +33,14 @@ const ICONS = {
   plus: `<path d="M12 5v14"/><path d="M5 12h14"/>`,
   minus: `<path d="M5 12h14"/>`,
   target: `<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 2.5v3"/><path d="M12 18.5v3"/><path d="M2.5 12h3"/><path d="M18.5 12h3"/>`,
+  // Product-page advantages & applications
+  ruler: `<path d="M2.5 16.5L16.5 2.5l5 5L7.5 21.5z"/><path d="M6.5 12.5l2 2"/><path d="M9.5 9.5l2 2"/><path d="M12.5 6.5l2 2"/>`,
+  blocks: `<rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><rect x="3" y="3" width="8" height="8" rx="1.5"/><path d="M17 4v6"/><path d="M14 7h6"/>`,
+  clock: `<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>`,
+  trend: `<path d="M3 6l6.5 6.5 3.5-3.5 8 8"/><path d="M21 12v5h-5"/>`,
+  lift: `<path d="M12 19V5"/><path d="M6.5 10.5L12 5l5.5 5.5"/><path d="M4 21h16"/>`,
+  stack: `<rect x="4" y="15" width="16" height="5" rx="1"/><rect x="6" y="9.5" width="12" height="5" rx="1"/><rect x="8" y="4" width="8" height="5" rx="1"/>`,
+  warehouse: `<path d="M3 20V8.5L12 4l9 4.5V20"/><path d="M3 20h18"/><path d="M8 20v-6h8v6"/><path d="M12 14v6"/>`,
 }
 
 export function icon(name, cls = '') {
@@ -69,7 +79,8 @@ export function media(product, cls = '', alt = '') {
 
 /**
  * Product image/video with a designed placeholder when the file is absent.
- * Keeps the layout identical either way.
+ * A missing video clip falls back to its poster image; a missing image to
+ * the placeholder. Keeps the layout identical either way.
  */
 export function figure(product) {
   const fig = el(
@@ -78,10 +89,24 @@ export function figure(product) {
        <div class="hero__fallback">${icon(product.icon)}<span>${product.name}</span></div>
      </figure>`,
   )
-  const node = fig.querySelector('.hero__media')
-  const ready = node.tagName === 'VIDEO' ? 'loadeddata' : 'load'
-  node.addEventListener('error', () => fig.classList.add('is-fallback'), { once: true })
-  node.addEventListener(ready, () => fig.classList.add('is-loaded'), { once: true })
+  const watch = (node) => {
+    const ready = node.tagName === 'VIDEO' ? 'loadeddata' : 'load'
+    node.addEventListener(ready, () => fig.classList.add('is-loaded'), { once: true })
+    node.addEventListener(
+      'error',
+      () => {
+        if (node.tagName === 'VIDEO' && product.image) {
+          const still = el(media({ image: product.image }, 'hero__media', product.name))
+          node.replaceWith(still)
+          watch(still)
+        } else {
+          fig.classList.add('is-fallback')
+        }
+      },
+      { once: true },
+    )
+  }
+  watch(fig.querySelector('.hero__media'))
   return fig
 }
 

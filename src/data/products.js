@@ -16,12 +16,23 @@
  *   7/10 columns, `narrow` 3/10, `half` 5/10, `full` 10/10. Rows must add up
  *   to 10.
  * - `partner` (optional) is the OEM whose technology the product is built on.
- * - `facts` are 3–4 headline specs shown as stat blocks.
- * - `range` is a list of groups, each with `title` (optional) and `items`
- *   of `{ name, note }`. Model codes, conveyor types, applications, etc.
+ *
+ * The product screen is a deck of cards. What a product defines decides
+ * which cards it gets:
+ *
+ * - Overview (always): `description`, `facts` (3–4 headline specs shown as
+ *   small stat blocks) and, optionally, `applications` — a row of icon chips
+ *   `{ icon, name }` for where the product is used.
+ * - Key advantages: `advantages`, a list of `{ icon, title, points }` where
+ *   each point is `{ lead, text }`. Four entries make a 2 × 2 grid.
+ * - At a glance: `performance`, a list of `{ value, label, note }` shown as
+ *   big figures on dark tiles. Keep `value` short (a number or one word).
+ * - Range: `range`, a list of groups, each with `title` (optional) and
+ *   `items` of `{ name, note }`. Model codes, conveyor types, etc.
+ *   `rangeLabel` (optional) renames the card, e.g. "Configurations".
  *
  * Sources: aandd.jp (AD-4961 specs), aanddindia.in, mesutronic.de
- * (METRON / QUICKTRON), safesurge.co.in (product pages).
+ * (METRON / QUICKTRON), conveline.com, safesurge.co.in (product pages).
  */
 
 export const brand = {
@@ -176,17 +187,91 @@ export const products = [
     id: 'conveyors',
     category: 'handling',
     name: 'Conveyors',
+    partner: 'Conveline Systems, India',
     icon: 'conveyor',
-    image: '/products/conveyor-1.jpg',
+    image: '/products/conveyor-1.png',
     video: '/products/conveyors.mp4',
     url: 'https://safesurge.co.in/product/spiral-conveyor-system/',
     description:
-      'Food-grade belt, modular and screw conveyors manufactured in India and engineered with metal-free zones so detectors drop straight in. From a single straight section to complete multi-floor spiral systems, each line is sized to your product, speed and layout.',
+      'Modern production environments need material handling that eliminates operational risk, minimises total cost of ownership and adapts to shifting demand. Our premium modular conveyor platforms deliver institutional-grade reliability, absolute layout flexibility and seamless integration into automated enterprise ecosystems.',
     facts: [
       { label: 'Configurations', value: '11 types' },
       { label: 'Build', value: 'Made in India' },
       { label: 'Detector-ready', value: 'Metal-free zone' },
     ],
+    applications: [
+      { icon: 'shield', name: 'Inspection lines' },
+      { icon: 'box', name: 'End-of-line packing' },
+      { icon: 'lift', name: 'Elevation & floor transfer' },
+      { icon: 'stack', name: 'Accumulation & buffering' },
+      { icon: 'funnel', name: 'Bulk & powder handling' },
+      { icon: 'warehouse', name: 'Warehousing & intralogistics' },
+    ],
+    advantages: [
+      {
+        icon: 'ruler',
+        title: 'Bespoke engineering',
+        points: [
+          {
+            lead: 'Application-specific design.',
+            text: 'Structural modelling tuned to your payload dynamics, environment and floor space.',
+          },
+          {
+            lead: 'Turnkey footprint.',
+            text: 'Custom-configured modules fit brownfield or greenfield layouts without structural compromise.',
+          },
+        ],
+      },
+      {
+        icon: 'blocks',
+        title: 'Modular & scalable',
+        points: [
+          {
+            lead: 'Future-proof topology.',
+            text: 'Reconfigure, extend or re-route the line with minimal capital expenditure.',
+          },
+          {
+            lead: 'Interoperable by design.',
+            text: 'Native compatibility with warehouse execution systems, robotics and upstream / downstream automation.',
+          },
+        ],
+      },
+      {
+        icon: 'clock',
+        title: 'Built for continuous duty',
+        points: [
+          {
+            lead: 'Precision tolerances.',
+            text: 'High-gauge, vibration-damping structure for ultra-smooth transit and less mechanical fatigue.',
+          },
+          {
+            lead: '24/7/365 duty cycle.',
+            text: 'Engineered for rigorous multi-shift operation, dramatically improving MTBF.',
+          },
+        ],
+      },
+      {
+        icon: 'trend',
+        title: 'Lower cost of ownership',
+        points: [
+          {
+            lead: 'Rapid-access maintenance.',
+            text: 'Toolless quick-release parts and accessible wear strips cut service windows from hours to minutes.',
+          },
+          {
+            lead: 'High-efficiency powertrains.',
+            text: 'Premium variable-frequency drives optimise energy use and support sustainability mandates.',
+          },
+        ],
+      },
+    ],
+    performance: [
+      { value: '24/7/365', label: 'Duty cycle', note: 'Continuous multi-shift operation with a longer mean time between failures.' },
+      { value: '11', label: 'Configurations', note: 'Straight, incline, spiral, alpine and more \u2014 one modular platform.' },
+      { value: 'Minutes', label: 'Service windows', note: 'Toolless quick-release parts and accessible wear strips, not hours of downtime.' },
+      { value: 'VFD', label: 'Powertrains', note: 'Variable-frequency drives trim energy use and support sustainability targets.' },
+    ],
+    rangeLabel: 'Configurations',
     range: [
       {
         items: [

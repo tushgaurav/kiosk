@@ -1,5 +1,6 @@
+import { card, deck, pad } from '../components/deck.js'
 import { mountMap } from '../components/map.js'
-import { el, icon, logo, mountQr, scrollFade } from '../components/ui.js'
+import { el, icon, logo, mountQr } from '../components/ui.js'
 
 /**
  * About screen. Two subpages:
@@ -25,7 +26,7 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
        <header class="topbar">
          <div class="topbar__actions">
            <button class="pill pill--visit" type="button">${icon('pin')}<span>Visit us</span></button>
-           <button class="pill pill--home" type="button" aria-label="Back to start">${icon('home')}<span>Home</span></button>
+           <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
          </div>
        </header>
 
@@ -40,18 +41,6 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
          </div>
        </figure>
 
-       <div class="deck">
-         <div class="deck__nav" role="tablist" aria-label="About SafeSurge">
-           ${about.cards
-             .map(
-               (c, i) =>
-                 `<button class="deck__tab" type="button" role="tab" id="tab-${c.id}" aria-controls="card-${c.id}" aria-selected="${i === 0}" data-id="${c.id}">${c.label}</button>`,
-             )
-             .join('')}
-         </div>
-         <div class="deck__track"></div>
-       </div>
-
        <footer class="info__footer">
          <button class="cta cta--explore" type="button"><span>Explore Products</span></button>
          <button class="cta cta--inquire" type="button"><span>Inquire Now</span></button>
@@ -60,7 +49,7 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
   )
 
   screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
-  screen.querySelector('.pill--home').addEventListener('click', onHome)
+  screen.querySelector('.navbtn--home').addEventListener('click', onHome)
   screen.querySelector('.pill--visit').addEventListener('click', onVisit)
   screen.querySelector('.cta--explore').addEventListener('click', onExplore)
   screen.querySelector('.cta--inquire').addEventListener('click', onInquire)
@@ -70,66 +59,30 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
   photo.addEventListener('load', () => frame.classList.add('is-loaded'), { once: true })
   photo.addEventListener('error', () => frame.classList.add('is-fallback'), { once: true })
 
-  // ---- Card deck ----------------------------------------------------------
-  const track = screen.querySelector('.deck__track')
-  const total = about.cards.length
-  about.cards.forEach((c, i) => track.append(renderCard(c, i, total, { categories, onCategory })))
-  const cards = [...track.children]
-  const tabs = [...screen.querySelectorAll('.deck__tab')]
-
-  function select(id, { scroll = true, behavior = 'smooth' } = {}) {
-    const i = Math.max(
-      0,
-      about.cards.findIndex((c) => c.id === id),
-    )
-    tabs.forEach((t, n) => t.setAttribute('aria-selected', String(n === i)))
-    cards.forEach((c, n) => c.classList.toggle('is-current', n === i))
-    tabs[i]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior })
-    if (scroll) track.scrollTo({ left: cards[i].offsetLeft - track.offsetLeft, behavior })
-  }
-
-  tabs.forEach((t) => t.addEventListener('click', () => select(t.dataset.id)))
-
-  // Keep the index in step with finger swipes.
-  let raf = 0
-  track.addEventListener(
-    'scroll',
-    () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const x = track.scrollLeft + track.offsetLeft
-        let best = 0
-        cards.forEach((c, n) => {
-          if (Math.abs(c.offsetLeft - x) < Math.abs(cards[best].offsetLeft - x)) best = n
-        })
-        select(about.cards[best].id, { scroll: false })
-      })
-    },
-    { passive: true },
+  screen.querySelector('.info__footer').before(
+    deck({
+      label: 'About SafeSurge',
+      cards: about.cards,
+      initial: initialCard,
+      render: (c, i, total) => renderCard(c, i, total, { categories, onCategory }),
+    }),
   )
-
-  cards.forEach((c) => scrollFade(c.querySelector('.card__body')))
-  select(initialCard ?? about.cards[0].id, { scroll: Boolean(initialCard), behavior: 'instant' })
   return screen
 }
 
 /** One card of the deck. */
-function renderCard(card, i, total, { categories, onCategory }) {
-  const node = el(
-    `<article class="card" id="card-${card.id}" role="tabpanel" aria-labelledby="tab-${card.id}" style="--i:${i}">
-       <header class="card__head">
-         <h2 class="card__title">${card.label}</h2>
-         <span class="card__index">${pad(i + 1)} / ${pad(total)}</span>
-       </header>
-       <div class="card__body">
-         ${card.text ? `<p class="card__text">${card.text}</p>` : ''}
-         ${card.stats ? stats(card.stats) : ''}
-         ${card.categories ? categoryList(categories) : ''}
-         ${card.groups ? card.groups.map(group).join('') : ''}
-         ${card.steps ? steps(card.steps) : ''}
-       </div>
-     </article>`,
-  )
+function renderCard(c, i, total, { categories, onCategory }) {
+  const node = card({
+    title: c.label,
+    index: i,
+    total,
+    body: `
+      ${c.text ? `<p class="card__text">${c.text}</p>` : ''}
+      ${c.stats ? stats(c.stats) : ''}
+      ${c.categories ? categoryList(categories) : ''}
+      ${c.groups ? c.groups.map(group).join('') : ''}
+      ${c.steps ? steps(c.steps) : ''}`,
+  })
   node.querySelectorAll('.card__link').forEach((b) => {
     b.addEventListener('click', () => onCategory?.(b.dataset.category))
   })
@@ -172,8 +125,6 @@ function steps(items) {
     .join('')}</ol>`
 }
 
-const pad = (n) => String(n).padStart(2, '0')
-
 /* -------------------------------------------------------------------------- */
 /* Visit us                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -184,8 +135,8 @@ function renderVisit({ brand, about, onHome, onAbout, onExplore, onInquire }) {
     `<section class="screen screen--visit">
        <header class="topbar">
          <div class="topbar__actions">
-           <button class="pill pill--about" type="button"><span>About us</span>${icon('arrow')}</button>
-           <button class="pill pill--home" type="button" aria-label="Back to start">${icon('home')}<span>Home</span></button>
+           <button class="navbtn navbtn--about" type="button" aria-label="About us" title="About us">${icon('info')}</button>
+           <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
          </div>
        </header>
 
@@ -221,8 +172,8 @@ function renderVisit({ brand, about, onHome, onAbout, onExplore, onInquire }) {
   )
 
   screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
-  screen.querySelector('.pill--home').addEventListener('click', onHome)
-  screen.querySelector('.pill--about').addEventListener('click', onAbout)
+  screen.querySelector('.navbtn--home').addEventListener('click', onHome)
+  screen.querySelector('.navbtn--about').addEventListener('click', onAbout)
   screen.querySelector('.cta--explore').addEventListener('click', onExplore)
   screen.querySelector('.cta--inquire').addEventListener('click', onInquire)
 

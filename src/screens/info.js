@@ -1,12 +1,17 @@
-import { el, figure, icon, logo, mountQr, scrollFade } from '../components/ui.js'
+import { card, deck } from '../components/deck.js'
+import { el, figure, icon, logo, mountQr } from '../components/ui.js'
 
+/**
+ * Product screen: title and sub-category switcher, cover photo, then a deck
+ * of cards the visitor swipes through. Which cards appear depends on what
+ * the product defines (see `pages()` below); every product has at least an
+ * Overview.
+ */
 export function renderInfo({ brand, product, category, siblings = [], index, total, onHome, onPrev, onNext, onSelect, onInquire }) {
   const screen = el(
     `<section class="screen screen--info">
        <header class="topbar">
-         <button class="pill pill--home" type="button" aria-label="Back to start">
-           ${icon('home')}<span>Home</span>
-         </button>
+         <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
        </header>
 
        <div class="info__title">
@@ -16,16 +21,6 @@ export function renderInfo({ brand, product, category, siblings = [], index, tot
        </div>
 
        <div class="info__hero"></div>
-
-       <div class="info__copy">
-         <p class="lede">${product.description}</p>
-         <div class="qr">
-           <div class="qr__code" aria-busy="true"></div>
-           <span class="qr__label">Scan for details on your phone</span>
-         </div>
-         ${facts(product.facts)}
-         ${range(product.range)}
-       </div>
 
        <footer class="info__footer">
          <div class="pager">
@@ -41,22 +36,29 @@ export function renderInfo({ brand, product, category, siblings = [], index, tot
   screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
   screen.querySelector('.info__hero').append(figure(product))
 
+  screen.querySelector('.info__footer').before(
+    deck({
+      label: `${product.name} details`,
+      cards: pages(product),
+      render: (p, i, n) => card({ title: p.label, index: i, total: n, body: p.body, bodyClass: p.bodyClass }),
+    }),
+  )
+
   const qr = screen.querySelector('.qr__code')
   mountQr(qr, product.url).then(() => qr.removeAttribute('aria-busy'))
 
-  scrollFade(screen.querySelector('.range'))
-
-  screen.querySelector('.pill--home').addEventListener('click', onHome)
+  screen.querySelector('.navbtn--home').addEventListener('click', onHome)
   screen.querySelector('.iconbtn--prev').addEventListener('click', onPrev)
   screen.querySelector('.iconbtn--next').addEventListener('click', onNext)
   screen.querySelector('.cta--inquire').addEventListener('click', () => onInquire(product))
   mountSubnav(screen.querySelector('.subnav'), siblings, index, onSelect)
 
-  // Horizontal swipe between products (touch / pen / mouse drag).
+  // Horizontal swipe between products (touch / pen / mouse drag) on the
+  // title and photo. The deck below has its own sideways scroll.
   let startX = null
   let startY = null
   screen.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button, .subnav')) return
+    if (e.target.closest('button, .subnav, .deck')) return
     startX = e.clientX
     startY = e.clientY
   })
@@ -125,6 +127,44 @@ function mountSubnav(nav, siblings, current, onSelect) {
   new ResizeObserver(settle).observe(strip)
 }
 
+/* -------------------------------------------------------------------------- */
+/* Cards                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The deck for a product, in reading order. Each entry is `{ id, label,
+ * body, bodyClass }`; cards whose content the product does not define are
+ * left out.
+ */
+function pages(product) {
+  const list = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      bodyClass: 'card__body--overview',
+      body: `
+        <p class="lede">${product.description}</p>
+        <div class="qr">
+          <div class="qr__code" aria-busy="true"></div>
+          <span class="qr__label">Scan for details on your phone</span>
+        </div>
+        ${facts(product.facts)}
+        ${applications(product.applications)}`,
+    },
+  ]
+  if (product.advantages?.length) {
+    list.push({ id: 'advantages', label: 'Key advantages', bodyClass: 'card__body--adv', body: advantages(product.advantages) })
+  }
+  if (product.performance?.length) {
+    list.push({ id: 'glance', label: 'At a glance', bodyClass: 'card__body--glance', body: glance(product.performance) })
+  }
+  const groups = (product.range ?? []).filter((g) => g.items?.length)
+  if (groups.length) {
+    list.push({ id: 'range', label: product.rangeLabel ?? 'Range', body: range(groups) })
+  }
+  return list
+}
+
 /** Headline specs as a row of stat blocks. */
 function facts(items = []) {
   if (!items.length) return ''
@@ -133,10 +173,46 @@ function facts(items = []) {
     .join('')}</dl>`
 }
 
-/** Model / variant list, optionally grouped. Scrolls if it outgrows the screen. */
-function range(groups = []) {
-  const withItems = groups.filter((g) => g.items?.length)
-  if (!withItems.length) return ''
+/** Where the product is used: a row of icon chips under the overview. */
+function applications(items = []) {
+  if (!items.length) return ''
+  return `<section class="apps">
+    <h3 class="range__title">Applications</h3>
+    <ul class="chips" role="list">
+      ${items.map((a) => `<li class="chip chip--icon">${icon(a.icon)}<span>${a.name}</span></li>`).join('')}
+    </ul>
+  </section>`
+}
+
+/** Key advantages: a grid of panels, each an icon, a title and 2–3 points. */
+function advantages(items) {
+  return `<ul class="adv" role="list">${items
+    .map(
+      (a) => `<li class="adv__item">
+        <h3 class="adv__title"><span class="adv__icon">${icon(a.icon)}</span>${a.title}</h3>
+        <ul class="adv__points" role="list">
+          ${a.points.map((p) => `<li>${p.lead ? `<b>${p.lead}</b> ` : ''}${p.text}</li>`).join('')}
+        </ul>
+      </li>`,
+    )
+    .join('')}</ul>`
+}
+
+/** Performance at a glance: big figures on dark tiles. */
+function glance(items) {
+  return `<ul class="glance" role="list">${items
+    .map(
+      (s) => `<li class="glance__item">
+        <span class="glance__label">${s.label}</span>
+        <b class="glance__value">${s.value}</b>
+        ${s.note ? `<span class="glance__note">${s.note}</span>` : ''}
+      </li>`,
+    )
+    .join('')}</ul>`
+}
+
+/** Model / variant list, optionally grouped. */
+function range(withItems) {
   return `<div class="range">${withItems
     .map(
       (g) => `<section class="range__group">

@@ -222,44 +222,6 @@ input {
   background: var(--surface);
 }
 
-/* Vertical scroll regions: hidden scrollbar, fade + nudging chevron while
-   there is more below the fold (see scrollFade() in ui.js). */
-.range {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  touch-action: pan-y;
-}
-
-.range::-webkit-scrollbar {
-  display: none;
-}
-
-.range.is-scrollable {
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5em), transparent);
-}
-
-.info__copy:has(.range.is-scrollable)::after {
-  content: '';
-  z-index: 1;
-  align-self: end;
-  justify-self: center;
-  width: 0.7em;
-  height: 0.7em;
-  margin-bottom: 0.5em;
-  border-right: 2.5px solid var(--ink-2);
-  border-bottom: 2.5px solid var(--ink-2);
-  transform: rotate(45deg);
-  font-size: var(--fs-body);
-  pointer-events: none;
-  animation: nudge 1.6s ease-in-out infinite;
-}
-
-.info__copy::after {
-  grid-area: range;
-}
-
 .eyebrow {
   display: flex;
   align-items: center;
@@ -391,10 +353,6 @@ input {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-.tile.has-image .tile__eyebrow {
-  color: rgba(255, 255, 255, 0.78);
-}
-
 .tile.has-image .tile__arrow {
   background: #fff;
   color: var(--ink);
@@ -424,14 +382,6 @@ input {
 
 .tile.has-image .tile__subs {
   color: rgba(255, 255, 255, 0.82);
-}
-
-.tile__eyebrow {
-  font-size: var(--fs-small);
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 .tile__name {
@@ -486,7 +436,7 @@ input {
     'top'
     'title'
     'hero'
-    'copy'
+    'deck'
     'foot';
 }
 
@@ -623,16 +573,11 @@ input {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  max-height: 32dvh;
+  max-height: 30dvh;
   margin: 0;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
-}
-
-/* No model list to make room for: let the photo take the space back. */
-.screen--info:not(:has(.range)) .hero {
-  max-height: 50dvh;
 }
 
 .hero__media {
@@ -680,27 +625,34 @@ input {
   color: var(--muted);
 }
 
-.info__copy {
-  grid-area: copy;
-  display: grid;
+/* Product cards. The deck and card chrome are styled under "About screen";
+   these are the body layouts the product pages add. */
+
+/* Overview: intro and QR side by side, headline specs pinned to the foot.
+   When the product lists applications, the specs move up under the intro
+   and the application chips take the foot instead. */
+.card__body--overview {
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: minmax(max-content, 1fr) auto;
+  grid-template-areas:
+    'lede  qr'
+    'facts facts';
+  column-gap: calc(var(--pad) * 0.8);
+  align-items: start;
+}
+
+.card__body--overview:has(.apps) {
+  grid-template-rows: auto minmax(max-content, 1fr) auto;
   grid-template-areas:
     'lede  qr'
     'facts qr'
-    'range range';
-  align-items: start;
-  column-gap: calc(var(--pad) * 0.8);
-  row-gap: var(--gap);
-  min-height: 0;
-  animation: rise 0.6s var(--ease-out) both;
-  animation-delay: 120ms;
+    'apps  apps';
 }
 
 .lede {
   grid-area: lede;
   margin: 0;
-  max-width: 44ch;
+  max-width: 50ch;
   font-size: calc(var(--fs-body) * 0.92);
   line-height: 1.42;
   color: var(--ink-2);
@@ -719,15 +671,15 @@ input {
   grid-area: facts;
   display: flex;
   flex-wrap: wrap;
-  gap: calc(var(--gap) * 0.6);
+  gap: calc(var(--gap) * 0.5);
   margin: 0;
 }
 
 .fact {
   display: grid;
   gap: 0.15em;
-  padding: 0.55em 0.95em;
-  background: var(--surface);
+  padding: 0.6em 1em;
+  background: var(--paper);
   border-radius: var(--radius);
 }
 
@@ -747,14 +699,172 @@ input {
   white-space: nowrap;
 }
 
-/* Model / variant range. Fills the rest of the screen and scrolls if needed. */
+/* Applications: icon chips in tidy columns under a ruled heading. */
+.apps {
+  grid-area: apps;
+  align-self: end;
+  display: grid;
+  gap: calc(var(--gap) * 0.55);
+}
+
+/* Two columns on the kiosk, one in a narrow window. */
+.apps .chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+}
+
+.chip--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.5em 1em 0.5em 0.8em;
+  font-size: calc(var(--fs-body) * 0.78);
+  white-space: normal;
+}
+
+.chip--icon .icon {
+  font-size: 1.2em;
+  stroke-width: 1.6;
+  color: var(--ink);
+}
+
+/* Key advantages: panels sharing the card's height, 2 × 2 on the kiosk. */
+.card__body--adv {
+  grid-template-rows: minmax(max-content, 1fr);
+}
+
+.adv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  grid-auto-rows: minmax(max-content, 1fr);
+  gap: calc(var(--gap) * 0.5);
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adv__item {
+  display: grid;
+  align-content: start;
+  gap: calc(var(--gap) * 0.55);
+  padding: 1em 1.1em 1.1em;
+  background: var(--paper);
+  border-radius: var(--radius);
+  font-size: var(--fs-small);
+}
+
+.adv__title {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin: 0;
+  font-size: calc(var(--fs-body) * 0.9);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.adv__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.adv__icon .icon {
+  font-size: 1em;
+  stroke-width: 1.6;
+}
+
+.adv__points {
+  display: grid;
+  gap: 0.6em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adv__points li {
+  padding-top: 0.6em;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.adv__points b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* At a glance: big figures on dark tiles sharing the card's height. */
+.card__body--glance {
+  grid-template-rows: minmax(max-content, 1fr);
+}
+
+.glance {
+  display: grid;
+  /* 2 × 2 on the kiosk; stacks in a narrow window. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  grid-auto-rows: minmax(max-content, 1fr);
+  gap: calc(var(--gap) * 0.5);
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.glance__item {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.5em;
+  padding: 1.1em 1.2em 1.2em;
+  color: #fff;
+  background: var(--ink);
+  border-radius: var(--radius);
+}
+
+.glance__item:first-child {
+  background: var(--red);
+}
+
+.glance__label {
+  font-family: var(--mono);
+  font-size: calc(var(--fs-small) * 0.85);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.glance__value {
+  align-self: end;
+  font-size: clamp(2rem, 5.8vmin, 4.4rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.glance__note {
+  max-width: 24ch;
+  font-size: var(--fs-small);
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.75);
+  text-wrap: pretty;
+}
+
+/* Model / variant range. */
 .range {
-  grid-area: range;
-  align-self: stretch;
   display: grid;
   align-content: start;
   gap: var(--gap);
-  padding-bottom: calc(var(--gap) * 0.5);
 }
 
 .range__group {
@@ -783,8 +893,8 @@ input {
 
 .range__list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
-  gap: calc(var(--gap) * 0.6);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: calc(var(--gap) * 0.5);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -793,8 +903,8 @@ input {
 .range__item {
   display: grid;
   gap: 0.2em;
-  padding: 0.7em 0.95em;
-  border: 1.5px solid var(--line);
+  padding: 0.75em 1em 0.85em;
+  background: var(--paper);
   border-radius: var(--radius);
 }
 
@@ -821,6 +931,15 @@ input {
 .qr__code[aria-busy='true'] {
   background: var(--surface);
   border-radius: 4px;
+}
+
+/* On a card the QR sits on its own white tile. */
+.card .qr__code {
+  width: clamp(80px, 14vmin, 170px);
+  padding: calc(var(--gap) * 0.45);
+  box-sizing: content-box;
+  background: var(--paper);
+  border-radius: calc(var(--radius) * 0.7);
 }
 
 .qr__code svg {
@@ -904,13 +1023,25 @@ input {
   background: var(--surface);
 }
 
-/* Icon-first variant used for "Home" on inner screens. */
-.pill--home {
-  padding: 0 1.4em 0 1.15em;
+/* Round icon-only buttons in the top bar (Home, About us): a solid glyph in
+   an outlined circle the same height as a pill, so the two sit level. */
+.navbtn {
+  display: grid;
+  place-items: center;
+  width: calc(var(--touch) * 0.72);
+  height: calc(var(--touch) * 0.72);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  color: var(--ink);
+  font-size: calc(var(--touch) * 0.36);
+  transition:
+    transform 0.16s var(--ease-out),
+    background-color 0.16s;
 }
 
-.pill--home .icon {
-  font-size: 1.1em;
+.navbtn:active {
+  transform: scale(0.94);
+  background: var(--surface);
 }
 
 /* Top bar with more than one pill. */
@@ -1911,7 +2042,7 @@ input {
     grid-template-areas:
       'top  top'
       'hero title'
-      'hero copy'
+      'hero deck'
       'hero foot';
     column-gap: calc(var(--pad) * 1.2);
   }
@@ -1920,11 +2051,6 @@ input {
     height: 100%;
     max-height: none;
     aspect-ratio: auto;
-  }
-
-  .info__copy {
-    align-content: start;
-    padding-top: calc(var(--gap) * 0.6);
   }
 
   .screen--about {
@@ -2034,17 +2160,6 @@ input {
   60%,
   100% {
     box-shadow: 0 0 0 16px rgba(20, 20, 20, 0);
-  }
-}
-
-/* "More below" chevron. */
-@keyframes nudge {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 5px;
   }
 }
 

@@ -9,9 +9,7 @@ export function renderHome({ brand, categories, products, onSelect, onAbout }) {
   const screen = el(
     `<section class="screen screen--home">
        <header class="topbar">
-         <button class="pill pill--about" type="button">
-           <span>About us</span>${icon('arrow')}
-         </button>
+         <button class="navbtn navbtn--about" type="button" aria-label="About us" title="About us">${icon('info')}</button>
        </header>
        <h1 class="headline">${brand.tagline.replace(/\.$/, '')}<span class="dot">.</span></h1>
        <nav class="tiles" aria-label="Product categories"></nav>
@@ -24,7 +22,7 @@ export function renderHome({ brand, categories, products, onSelect, onAbout }) {
   )
 
   screen.querySelector('.topbar').prepend(logo(brand))
-  screen.querySelector('.pill--about').addEventListener('click', onAbout)
+  screen.querySelector('.navbtn--about').addEventListener('click', onAbout)
 
   const tiles = screen.querySelector('.tiles')
   categories.forEach((c, i) => {
@@ -35,7 +33,6 @@ export function renderHome({ brand, categories, products, onSelect, onAbout }) {
       `<button class="tile tile--${c.tile}" type="button" style="--i:${i}">
          ${media(c, 'tile__img')}
          <span class="tile__meta">
-           <span class="tile__eyebrow">${c.eyebrow}</span>
            <span class="tile__name">${c.name}</span>
            ${subs.length ? `<span class="tile__subs">${subs.map((s) => `<span class="tile__sub">${s}</span>`).join(' \u00b7 ')}</span>` : ''}
          </span>
