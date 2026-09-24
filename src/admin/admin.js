@@ -6,18 +6,20 @@ import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
 import './admin.css'
 
-import { el, icon, logo } from '../components/ui.js'
+import { el, icon, logo, qrSvg } from '../components/ui.js'
 import { brand } from '../data/products.js'
 
 const TOKEN_KEY = 'safesurge:admin-token'
 const REFRESH_MS = 30_000
-const SEARCH_FIELDS = ['name', 'designation', 'company', 'email', 'phone', 'city', 'state', 'product_name']
+const SEARCH_FIELDS = ['name', 'designation', 'company', 'email', 'phone', 'city', 'state']
 
 const root = document.querySelector('#admin')
 
 let token = sessionStorage.getItem(TOKEN_KEY) || ''
 let rows = []
 let query = ''
+/** `{ qr_url, default_qr_url }` from the server, or null if it could not be loaded. */
+let settings = null
 /** The active dashboard's reload function, or null when signed out. */
 let reload = null
 
@@ -56,11 +58,21 @@ function signOut() {
   renderLogin()
 }
 
+/** Fetch kiosk settings; a failure leaves `settings` null so the panel can say so. */
+async function loadSettings() {
+  try {
+    const res = await api('/settings')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    settings = await res.json()
+  } catch (err) {
+    if (err.message === 'Signed out') throw err
+    settings = null
+  }
+}
+
 function matches(lead, q) {
   if (!q) return true
-  const hay = SEARCH_FIELDS.map((f) => lead[f] || '')
-    .join(' ')
-    .toLowerCase()
+  const hay = [...SEARCH_FIELDS.map((f) => lead[f] || ''), ...interestNames(lead)].join(' ').toLowerCase()
   return q
     .toLowerCase()
     .split(/\s+/)
@@ -106,6 +118,7 @@ function renderLogin(message = '') {
       token = password
       sessionStorage.setItem(TOKEN_KEY, token)
       rows = await res.json()
+      await loadSettings()
       renderDashboard()
     } catch (err) {
       error.textContent = err.message.includes('fetch') ? 'Cannot reach the kiosk server.' : err.message
@@ -147,6 +160,35 @@ function renderDashboard() {
        </header>
 
        <main class="body">
+         <section class="qrpanel" aria-labelledby="qrpanel-title">
+           <div class="qrpanel__text">
+             <p class="eyebrow">Product QR codes</p>
+             <h2 id="qrpanel-title" class="qrpanel__title">Catalogue link</h2>
+             <p class="qrpanel__help">
+               Every product QR on the kiosk opens this link. Changes reach the kiosk within a minute, no restart needed.
+               Clear the field or use Reset to go back to the default.
+             </p>
+             <form class="qrform" novalidate>
+               <label class="field">
+                 <span class="field__label">Link</span>
+                 <input name="qr_url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://…" />
+               </label>
+               <div class="qrform__actions">
+                 <button class="btn btn--primary" type="submit"><span>Save</span></button>
+                 <button class="btn btn--ghost" type="button" data-action="reset-qr">Reset to default</button>
+                 <span class="qrform__status" role="status"></span>
+               </div>
+             </form>
+           </div>
+           <figure class="qrpanel__preview">
+             <div class="qrpanel__code" aria-label="Preview of the QR code shown on the kiosk"></div>
+             <figcaption>
+               <span class="qrpanel__state"></span>
+               <a class="qrpanel__link" target="_blank" rel="noopener"></a>
+             </figcaption>
+           </figure>
+         </section>
+
          <div class="table-wrap">
            <table class="leads">
              <thead>
@@ -193,6 +235,74 @@ function renderDashboard() {
     status.classList.toggle('is-offline', offline)
   }
 
+  // ---- QR link panel ----
+
+  const qrForm = view.querySelector('.qrform')
+  const qrInput = qrForm.querySelector('input')
+  const qrSave = qrForm.querySelector('[type=submit]')
+  const qrReset = qrForm.querySelector('[data-action="reset-qr"]')
+  const qrStatus = qrForm.querySelector('.qrform__status')
+  const qrCode = view.querySelector('.qrpanel__code')
+  const qrState = view.querySelector('.qrpanel__state')
+  const qrLink = view.querySelector('.qrpanel__link')
+
+  function setQrStatus(text, error = false) {
+    qrStatus.textContent = text
+    qrStatus.classList.toggle('is-error', error)
+  }
+
+  /** Reflect `settings` in the form and preview. */
+  function paintSettings() {
+    if (!settings) {
+      qrInput.disabled = qrSave.disabled = qrReset.disabled = true
+      qrState.textContent = ''
+      qrLink.textContent = ''
+      qrLink.removeAttribute('href')
+      setQrStatus('Could not load settings from the server.', true)
+      return
+    }
+    const isDefault = settings.qr_url === settings.default_qr_url
+    qrInput.disabled = qrSave.disabled = false
+    qrReset.disabled = isDefault
+    qrInput.value = settings.qr_url
+    qrState.textContent = isDefault ? 'Default link' : 'Custom link'
+    qrLink.textContent = settings.qr_url
+    qrLink.href = settings.qr_url
+    const url = settings.qr_url
+    qrSvg(url).then((svg) => {
+      if (settings?.qr_url === url) qrCode.innerHTML = svg
+    })
+  }
+
+  /** PUT the link to the server; an empty value restores the default. */
+  async function saveQrUrl(value) {
+    qrSave.disabled = qrReset.disabled = true
+    setQrStatus('Saving…')
+    try {
+      const res = await api('/settings', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ qr_url: value }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.error || 'The server returned an error. Try again.')
+      settings = body
+      paintSettings()
+      setQrStatus(`Saved ${fmtClock.format(new Date())}`)
+    } catch (err) {
+      if (err.message === 'Signed out') return
+      qrSave.disabled = false
+      qrReset.disabled = !settings || settings.qr_url === settings.default_qr_url
+      setQrStatus(err.message.includes('fetch') ? 'Cannot reach the kiosk server.' : err.message, true)
+      qrInput.focus()
+    }
+  }
+
+  qrForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    saveQrUrl(qrInput.value.trim())
+  })
+
   async function load() {
     try {
       const res = await api('/leads')
@@ -217,6 +327,7 @@ function renderDashboard() {
 
     if (action === 'refresh') return load()
     if (action === 'signout') return signOut()
+    if (action === 'reset-qr') return saveQrUrl('')
 
     if (action === 'export') {
       btn.disabled = true
@@ -258,12 +369,22 @@ function renderDashboard() {
   reload = load
   root.replaceChildren(view)
   paint()
+  paintSettings()
   setStatus(`Updated ${fmtClock.format(new Date())}`)
+}
+
+/** Product names on a lead; an empty list is a general inquiry. */
+function interestNames(lead) {
+  const list = Array.isArray(lead.interests) ? lead.interests.map((p) => p.name) : []
+  return list.length ? list : ['General']
 }
 
 function rowHtml(lead) {
   const at = new Date(lead.created_at)
   const location = [lead.city, lead.state].filter(Boolean).join(', ')
+  const tags = interestNames(lead)
+    .map((n) => `<span class="tag">${esc(n)}</span>`)
+    .join('')
   return `
     <tr data-id="${lead.id}">
       <td class="leads__when">
@@ -279,7 +400,7 @@ function rowHtml(lead) {
         ${lead.phone ? `<a href="tel:${esc(lead.phone.replace(/\s+/g, ''))}">${esc(lead.phone)}</a>` : ''}
       </td>
       <td class="leads__where">${location ? esc(location) : '<span class="dash">—</span>'}</td>
-      <td class="leads__interest"><span class="tag">${esc(lead.product_name)}</span></td>
+      <td class="leads__interest"><div class="tags">${tags}</div></td>
       <td class="leads__tools">
         <button class="rowbtn" type="button" data-action="delete" aria-label="Delete inquiry from ${esc(lead.name)}">${icon('close')}</button>
       </td>
@@ -293,6 +414,7 @@ if (token) {
     .then(async (res) => {
       if (!res.ok) throw new Error()
       rows = await res.json()
+      await loadSettings()
       renderDashboard()
     })
     .catch(() => {

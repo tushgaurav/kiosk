@@ -11,7 +11,9 @@
  * - `video` (optional) is a short muted MP4 loop; `image` becomes its poster.
  *   Cover media sources: A&D / Mesutronic product photos (OEM partners),
  *   Pexels photos and Mixkit clips (both free for commercial use).
- * - `url` is what the QR code points to.
+ * - `url` is the product's page on the website. The kiosk's QR codes do not
+ *   use it: every product QR carries `brand.catalog`, or whichever link the
+ *   admin has set at /admin.
  * - `tile` (categories only) controls the home-screen grid: `wide` tiles take
  *   7/10 columns, `narrow` 3/10, `half` 5/10, `full` 10/10. Rows must add up
  *   to 10.
@@ -28,8 +30,12 @@
  * - At a glance: `performance`, a list of `{ value, label, note }` shown as
  *   big figures on dark tiles. Keep `value` short (a number or one word).
  * - Range: `range`, a list of groups, each with `title` (optional) and
- *   `items` of `{ name, note }`. Model codes, conveyor types, etc.
+ *   `items` of `{ name, note, docs }`. Model codes, conveyor types, etc.
  *   `rangeLabel` (optional) renames the card, e.g. "Configurations".
+ * - Documents: `docs`, a list of ids from `documents` below. Adds a
+ *   "Documents" card listing the manufacturer's datasheets, brochures and
+ *   manuals; tapping one opens it full-screen on the kiosk. A range item
+ *   can also carry `docs: [ids]` to put a datasheet button on that model.
  *
  * Sources: aandd.jp (AD-4961 specs), aanddindia.in, mesutronic.de
  * (METRON / QUICKTRON), conveline.com, safesurge.co.in (product pages).
@@ -39,6 +45,8 @@ export const brand = {
   name: 'SafeSurge',
   logo: '/safesurge.png',
   site: 'https://safesurge.co.in',
+  // Default link behind every product QR code. Changeable live at /admin.
+  catalog: 'https://safesurge-demo.s3.us-east-1.amazonaws.com/Safesurge+-+Catalog.pdf',
   tagline: 'Inspect. Convey. Automate.',
 }
 
@@ -121,6 +129,160 @@ export const about = {
     // What the "Scan for directions" QR opens on the visitor's phone.
     mapsUrl:
       'https://www.google.com/maps/search/?api=1&query=Safesurge+Inspection+Technologies+Plot+107+Sector+4+IMT+Manesar+Gurugram',
+  },
+}
+
+/**
+ * Manufacturer documents the kiosk can open. PDFs live in /public/docs/;
+ * `url` is where each was downloaded from and is what the "open on your
+ * phone" QR in the viewer points to. `type` is shown as the eyebrow and
+ * `label` on the small buttons under a range model.
+ *
+ * Products list the ids they want under `docs`; range items under
+ * `docs` too. Same id, same file, so a document can sit on several products.
+ */
+export const documents = {
+  // ---- A&D checkweighers -------------------------------------------------
+  'ad-4961': {
+    title: 'AD-4961 Series',
+    type: 'Brochure',
+    label: 'AD-4961 brochure',
+    note: 'Platform overview, unit breakdown, specifications and options for the 600 g, 2 kg and 6 kg models.',
+    file: '/docs/ad-4961-brochure.pdf',
+    source: 'A&D Company, Japan',
+    url: 'https://aandd.jp/products/inspection_systems/pdf/ad4961.pdf',
+  },
+  'ad-4961a': {
+    title: 'AD-4961A Series',
+    type: 'Brochure',
+    label: 'AD-4961A brochure',
+    note: 'Current-generation platform: HPDF digital filter, 0.01 g resolution, stainless-steel cover option.',
+    file: '/docs/ad-4961a-brochure.pdf',
+    source: 'A&D Company, Japan',
+    url: 'https://aandd.jp/products/inspection_systems/pdf/ad4961a.pdf',
+  },
+  'ad-4961-manual': {
+    title: 'AD-4961-2KD-2035',
+    type: 'Instruction manual',
+    label: 'AD-4961 manual',
+    note: 'Full operating manual: setup, product registration, calibration, outputs, communications and error codes.',
+    file: '/docs/ad-4961-2kd-2035-manual.pdf',
+    source: 'A&D Company, Japan',
+    url: 'https://cms-prod.ricelake.com/media/wyujpogy/m_ad4961-2kd-2035_operation.pdf',
+  },
+
+  // ---- Mesutronic metal detectors ---------------------------------------
+  'metron-05-d': {
+    title: 'METRON 05 D',
+    type: 'Brochure',
+    label: 'METRON 05 D brochure',
+    note: 'Divisible tunnel detector for conveyor belts.',
+    file: '/docs/metron-05-d.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-METRON05-D-Plast-20240313.pdf',
+  },
+  'metron-05-d-datasheet': {
+    title: 'METRON 05 D',
+    type: 'Data sheet',
+    label: 'METRON 05 D data sheet',
+    note: 'Dimensions, metal-free zone, electrical data and AMD 05 layout.',
+    file: '/docs/metron-05-d-datasheet.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.volta.it/wp-content/uploads/2022/02/EN-DB-MN05D-02.2018.pdf',
+  },
+  'metron-05-c': {
+    title: 'METRON 05 C',
+    type: 'Brochure',
+    label: 'METRON 05 C brochure',
+    note: 'Closed tunnel detector with integrated or remote electronics.',
+    file: '/docs/metron-05-c.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-METRON05-C-Plast-20240313.pdf',
+  },
+  'metron-05-ci': {
+    title: 'METRON 05 CI',
+    type: 'Brochure',
+    label: 'METRON 05 CI brochure',
+    note: 'Mid-range tunnel detector with built-in evaluation electronics.',
+    file: '/docs/metron-05-ci.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-METRON05-CI-Food-20240313.pdf',
+  },
+  'metron-07-ci': {
+    title: 'METRON 07 CI',
+    type: 'Brochure',
+    label: 'METRON 07 CI brochure',
+    note: 'High-end tunnel detector with built-in evaluation electronics.',
+    file: '/docs/metron-07-ci.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2025/12/EN-Info-METRON-07-CI-Food-20240805.pdf',
+  },
+  'metron-07-ci-datasheet': {
+    title: 'METRON 07 CI',
+    type: 'Data sheet',
+    label: 'METRON 07 CI data sheet',
+    note: 'Aperture sizes, dimensions, weights and metal-free zones.',
+    file: '/docs/metron-07-ci-datasheet.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://showcase.mesutronic.de/wp-content/uploads/2023/09/EN-DB-MN07CI-12.2022.pdf',
+  },
+
+  // ---- Mesutronic metal separators --------------------------------------
+  'metron-05-cr': {
+    title: 'METRON 05 CR',
+    type: 'Brochure',
+    label: 'METRON 05 CR brochure',
+    note: 'Round-aperture detector for pipelines.',
+    file: '/docs/metron-05-cr.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-METRON05-CR-Food-20240313.pdf',
+  },
+  'quicktron-05-a': {
+    title: 'QUICKTRON 05 A',
+    type: 'Brochure',
+    label: 'QUICKTRON 05 A brochure',
+    note: 'Free-fall separator for powders and granulates.',
+    file: '/docs/quicktron-05-a.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-QUICKTRON05-A-Food-20240313.pdf',
+  },
+  'quicktron-03-r': {
+    title: 'QUICKTRON 03 R',
+    type: 'Brochure',
+    label: 'QUICKTRON 03 R brochure',
+    note: 'Compact free-fall separator for granulate and regrind.',
+    file: '/docs/quicktron-03-r.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-QUICKTRON03-R-Plast-20240313.pdf',
+  },
+
+  // ---- Mesutronic X-ray -------------------------------------------------
+  'easyscope-st': {
+    title: 'easySCOPE ST',
+    type: 'Brochure',
+    label: 'easySCOPE ST brochure',
+    note: 'Flat and narrow packs up to 238 mm wide.',
+    file: '/docs/easyscope-st.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-easySCOPE-ST-Food-20240313.pdf',
+  },
+  'easyscope-400': {
+    title: 'easySCOPE 400',
+    type: 'Brochure',
+    label: 'easySCOPE 400 brochure',
+    note: 'Medium-sized packs up to 380 mm wide.',
+    file: '/docs/easyscope-400.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-easySCOPE-400-Food-20240313.pdf',
+  },
+  'easyscope-600': {
+    title: 'easySCOPE 600',
+    type: 'Brochure',
+    label: 'easySCOPE 600 brochure',
+    note: 'Large-format products and bulk packs.',
+    file: '/docs/easyscope-600.pdf',
+    source: 'Mesutronic, Germany',
+    url: 'https://www.mesutronic.de/wp-content/uploads/2024/03/EN-Info-easySCOPE-600-Food-20240313.pdf',
   },
 }
 
@@ -362,12 +524,17 @@ export const products = [
       { label: 'Capacity', value: '600 g \u2013 20 kg' },
       { label: 'Protection', value: 'IP65' },
     ],
+    docs: ['ad-4961', 'ad-4961a', 'ad-4961-manual'],
     range: [
       {
         title: 'Imported \u00b7 Made in Japan',
         items: [
-          { name: 'AD4961-600K-1224', note: '600 g \u00b7 0.01 g resolution \u00b7 120 \u00d7 240 mm belt \u00b7 400 pcs/min' },
-          { name: 'AD4961-2KD-2035', note: '500 g / 2 kg dual range \u00b7 0.08 g (3\u03c3) \u00b7 200 \u00d7 350 mm belt \u00b7 320 pcs/min' },
+          { name: 'AD4961-600K-1224', note: '600 g \u00b7 0.01 g resolution \u00b7 120 \u00d7 240 mm belt \u00b7 400 pcs/min', docs: ['ad-4961'] },
+          {
+            name: 'AD4961-2KD-2035',
+            note: '500 g / 2 kg dual range \u00b7 0.08 g (3\u03c3) \u00b7 200 \u00d7 350 mm belt \u00b7 320 pcs/min',
+            docs: ['ad-4961', 'ad-4961-manual'],
+          },
         ],
       },
       {
@@ -408,6 +575,7 @@ export const products = [
       { label: 'Coil types', value: 'D \u00b7 C \u00b7 CI' },
       { label: 'Connectivity', value: 'Ethernet \u00b7 OPC UA' },
     ],
+    docs: ['metron-05-d', 'metron-05-d-datasheet', 'metron-05-c', 'metron-05-ci', 'metron-07-ci', 'metron-07-ci-datasheet'],
     range: [
       {
         title: 'Coil types',
@@ -415,14 +583,17 @@ export const products = [
           {
             name: 'D coil',
             note: 'Divisible tunnel head with separate control electronics. Splits open for retrofits and quick belt changes; built for rough duty and larger bulk heights.',
+            docs: ['metron-05-d', 'metron-05-d-datasheet'],
           },
           {
             name: 'C coil',
             note: 'Tunnel detector with integrated or remote electronics. Mounts horizontally or vertically; apertures from 5 cm to over 2 m wide.',
+            docs: ['metron-05-c'],
           },
           {
             name: 'CI coil',
             note: 'Tunnel detector with evaluation electronics built in \u2014 no control cabinet. METRON 05 CI for mid-range duty, METRON 07 CI for the tightest specs.',
+            docs: ['metron-05-ci', 'metron-07-ci'],
           },
         ],
       },
@@ -443,10 +614,15 @@ export const products = [
       { label: 'Footprint', value: 'One frame' },
       { label: 'Reject', value: 'One station' },
     ],
+    docs: ['ad-4961', 'metron-05-ci', 'metron-07-ci'],
     range: [
       {
         items: [
-          { name: 'Weigh + detect', note: 'AD-4961 weighing conveyor with a METRON CI tunnel head on the infeed.' },
+          {
+            name: 'Weigh + detect',
+            note: 'AD-4961 weighing conveyor with a METRON CI tunnel head on the infeed.',
+            docs: ['ad-4961', 'metron-05-ci'],
+          },
           { name: 'Single reject', note: 'Pusher, air-jet or drop-flap rejector handles both off-weight and contaminated packs.' },
           { name: 'Unified records', note: 'Weighing and detection events in one USB / network log for audits.' },
         ],
@@ -468,20 +644,24 @@ export const products = [
       { label: 'Free-fall bore', value: '50 \u2013 400 mm' },
       { label: 'Particle size', value: '\u2264 10 mm' },
     ],
+    docs: ['metron-05-cr', 'quicktron-05-a', 'quicktron-03-r'],
     range: [
       {
         items: [
           {
             name: 'METRON 05 CR',
             note: 'Round-aperture detector for pipelines from 30 mm to 450 mm. Liquids, pneumatic lines or free fall.',
+            docs: ['metron-05-cr'],
           },
           {
             name: 'QUICKTRON 05 A',
             note: 'Free-fall metal separator for granulates, regrind and powders. Nominal bores 50\u2013400 mm; rectangular shafts for higher throughput.',
+            docs: ['quicktron-05-a'],
           },
           {
             name: 'QUICKTRON 03 R',
             note: 'Compact free-fall separator for granulate and regrind where installation space is tight.',
+            docs: ['quicktron-03-r'],
           },
         ],
       },
@@ -502,6 +682,7 @@ export const products = [
       { label: 'Packaging', value: 'Incl. aluminium' },
       { label: 'Also checks', value: 'Count \u00b7 Fill' },
     ],
+    docs: ['easyscope-st', 'easyscope-400', 'easyscope-600'],
     range: [
       {
         items: [

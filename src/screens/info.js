@@ -1,13 +1,19 @@
 import { card, deck } from '../components/deck.js'
-import { el, figure, icon, logo, mountQr } from '../components/ui.js'
+import { interests } from '../components/interests.js'
+import { el, figure, icon, logo } from '../components/ui.js'
+import { openViewer } from '../components/viewer.js'
+import { documents } from '../data/products.js'
+import { mountProductQr } from '../settings.js'
 
 /**
  * Product screen: title and sub-category switcher, cover photo, then a deck
  * of cards the visitor swipes through. Which cards appear depends on what
  * the product defines (see `pages()` below); every product has at least an
- * Overview.
+ * Overview. Datasheet buttons (`[data-doc]`) anywhere in the deck open the
+ * document reader. The footer button adds the product to (or removes it
+ * from) the visitor's interests, which the tray under the screen submits.
  */
-export function renderInfo({ brand, product, category, siblings = [], index, total, onHome, onPrev, onNext, onSelect, onInquire }) {
+export function renderInfo({ brand, product, category, siblings = [], index, total, onHome, onPrev, onNext, onSelect }) {
   const screen = el(
     `<section class="screen screen--info">
        <header class="topbar">
@@ -28,7 +34,9 @@ export function renderInfo({ brand, product, category, siblings = [], index, tot
            <span class="pager__count" aria-label="Product ${index + 1} of ${total}"><b>${index + 1}</b> / ${total}</span>
            <button class="iconbtn iconbtn--next" type="button" aria-label="Next product">${icon('next')}</button>
          </div>
-         <button class="cta cta--inquire" type="button"><span>Inquire Now</span></button>
+         <button class="cta cta--interest" type="button" aria-pressed="false">
+           <span class="cta__swap"><span class="cta__off">${icon('plus')}Add to Interests</span><span class="cta__on">${icon('check')}Added</span></span>
+         </button>
        </footer>
      </section>`,
   )
@@ -36,22 +44,38 @@ export function renderInfo({ brand, product, category, siblings = [], index, tot
   screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
   screen.querySelector('.info__hero').append(figure(product))
 
-  screen.querySelector('.info__footer').before(
-    deck({
-      label: `${product.name} details`,
-      cards: pages(product),
-      render: (p, i, n) => card({ title: p.label, index: i, total: n, body: p.body, bodyClass: p.bodyClass }),
-    }),
-  )
+  const cards = deck({
+    label: `${product.name} details`,
+    cards: pages(product),
+    render: (p, i, n) => card({ title: p.label, index: i, total: n, body: p.body, bodyClass: p.bodyClass }),
+  })
+  screen.querySelector('.info__footer').before(cards)
+
+  cards.addEventListener('click', (e) => {
+    const doc = documents[e.target.closest('[data-doc]')?.dataset.doc]
+    if (doc) openViewer(doc)
+  })
 
   const qr = screen.querySelector('.qr__code')
-  mountQr(qr, product.url).then(() => qr.removeAttribute('aria-busy'))
+  mountProductQr(qr).then(() => qr.removeAttribute('aria-busy'))
 
   screen.querySelector('.navbtn--home').addEventListener('click', onHome)
   screen.querySelector('.iconbtn--prev').addEventListener('click', onPrev)
   screen.querySelector('.iconbtn--next').addEventListener('click', onNext)
-  screen.querySelector('.cta--inquire').addEventListener('click', () => onInquire(product))
   mountSubnav(screen.querySelector('.subnav'), siblings, index, onSelect)
+
+  // Add / remove this product from the interests. Mirrors the store, so a
+  // chip removed in the inquiry sheet is reflected here straight away.
+  const interest = screen.querySelector('.cta--interest')
+  const paintInterest = () => {
+    const on = interests.has(product.id)
+    interest.classList.toggle('is-added', on)
+    interest.setAttribute('aria-pressed', String(on))
+  }
+  interest.addEventListener('click', () => interests.toggle(product))
+  paintInterest()
+  const unsubscribe = interests.subscribe(paintInterest)
+  screen.cleanup = unsubscribe
 
   // Horizontal swipe between products (touch / pen / mouse drag) on the
   // title and photo. The deck below has its own sideways scroll.
@@ -162,7 +186,16 @@ function pages(product) {
   if (groups.length) {
     list.push({ id: 'range', label: product.rangeLabel ?? 'Range', body: range(groups) })
   }
+  const docs = resolveDocs(product.docs)
+  if (docs.length) {
+    list.push({ id: 'docs', label: 'Documents', body: docList(docs) })
+  }
   return list
+}
+
+/** Ids from `documents`, in order, skipping any that do not exist. */
+function resolveDocs(ids = []) {
+  return ids.filter((id) => documents[id]).map((id) => ({ id, ...documents[id] }))
 }
 
 /** Headline specs as a row of stat blocks. */
@@ -211,7 +244,7 @@ function glance(items) {
     .join('')}</ul>`
 }
 
-/** Model / variant list, optionally grouped. */
+/** Model / variant list, optionally grouped. Models with `docs` get buttons. */
 function range(withItems) {
   return `<div class="range">${withItems
     .map(
@@ -223,6 +256,7 @@ function range(withItems) {
               (it) => `<li class="range__item">
                 <span class="range__name">${it.name}</span>
                 ${it.note ? `<span class="range__note">${it.note}</span>` : ''}
+                ${docButtons(resolveDocs(it.docs))}
               </li>`,
             )
             .join('')}
@@ -230,4 +264,34 @@ function range(withItems) {
       </section>`,
     )
     .join('')}</div>`
+}
+
+/** Small "open the datasheet" buttons under a range model. */
+function docButtons(docs) {
+  if (!docs.length) return ''
+  return `<span class="range__docs">${docs
+    .map(
+      (d) =>
+        `<button class="docbtn" type="button" data-doc="${d.id}" aria-label="Open ${d.title} ${d.type.toLowerCase()}">${icon('doc')}<span>${d.label ?? d.type}</span></button>`,
+    )
+    .join('')}</span>`
+}
+
+/** Documents card: one row per datasheet, brochure or manual. */
+function docList(docs) {
+  return `<ul class="card__list doclist" role="list">${docs
+    .map(
+      (d) => `<li>
+        <button class="card__link doclink" type="button" data-doc="${d.id}">
+          <span class="card__icon">${icon('doc')}</span>
+          <span class="card__name">
+            ${d.title}
+            <span class="card__sub">${d.type}${d.source ? ` \u00b7 ${d.source}` : ''}</span>
+            ${d.note ? `<span class="doclink__note">${d.note}</span>` : ''}
+          </span>
+          <span class="card__arrow">${icon('next')}</span>
+        </button>
+      </li>`,
+    )
+    .join('')}</ul>`
 }

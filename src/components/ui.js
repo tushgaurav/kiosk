@@ -33,6 +33,8 @@ const ICONS = {
   plus: `<path d="M12 5v14"/><path d="M5 12h14"/>`,
   minus: `<path d="M5 12h14"/>`,
   target: `<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 2.5v3"/><path d="M12 18.5v3"/><path d="M2.5 12h3"/><path d="M18.5 12h3"/>`,
+  // Datasheets, brochures and manuals
+  doc: `<path d="M6.5 3h7.5l4.5 4.5V21h-12z"/><path d="M14 3v5h4.5"/><path d="M9.5 13h5"/><path d="M9.5 16.5h5"/>`,
   // Product-page advantages & applications
   ruler: `<path d="M2.5 16.5L16.5 2.5l5 5L7.5 21.5z"/><path d="M6.5 12.5l2 2"/><path d="M9.5 9.5l2 2"/><path d="M12.5 6.5l2 2"/>`,
   blocks: `<rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><rect x="3" y="3" width="8" height="8" rx="1.5"/><path d="M17 4v6"/><path d="M14 7h6"/>`,
@@ -41,6 +43,9 @@ const ICONS = {
   lift: `<path d="M12 19V5"/><path d="M6.5 10.5L12 5l5.5 5.5"/><path d="M4 21h16"/>`,
   stack: `<rect x="4" y="15" width="16" height="5" rx="1"/><rect x="6" y="9.5" width="12" height="5" rx="1"/><rect x="8" y="4" width="8" height="5" rx="1"/>`,
   warehouse: `<path d="M3 20V8.5L12 4l9 4.5V20"/><path d="M3 20h18"/><path d="M8 20v-6h8v6"/><path d="M12 14v6"/>`,
+  // On-screen keyboard
+  shift: `<path d="M12 4l8.5 8.5H15.5V20h-7v-7.5H3.5z"/>`,
+  backspace: `<path d="M9 5h11.5v14H9l-6-7z"/><path d="M12 9.5l5 5"/><path d="M17 9.5l-5 5"/>`,
 }
 
 export function icon(name, cls = '') {

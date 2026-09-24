@@ -7,15 +7,18 @@ import { renderAbout } from './screens/about.js'
 import { renderHome } from './screens/home.js'
 import { renderInfo } from './screens/info.js'
 import { closeInquiry, flushPendingLeads, openInquiry } from './components/inquiry.js'
+import { interests } from './components/interests.js'
+import { mountTray } from './components/tray.js'
+import { closeViewer, isViewerOpen } from './components/viewer.js'
+import { syncSettings } from './settings.js'
 
 /** Return to the attract screen after this much inactivity. */
 const IDLE_MS = 75_000
+/** Longer leash while a datasheet is open: a page takes a while to read. */
+const READING_IDLE_MS = 180_000
 
 const app = document.querySelector('#app')
 const state = { view: 'home', index: 0, page: 'company' }
-
-/** Stand-in "product" so the inquiry sheet works from the About screen. */
-const generalInquiry = { id: 'general', name: 'General', url: brand.site }
 
 function draw() {
   const screen =
@@ -41,7 +44,7 @@ function draw() {
             const i = products.findIndex((p) => p.category === id)
             go({ view: 'info', index: i < 0 ? 0 : i }, 'forward')
           },
-          onInquire: () => openInquiry(generalInquiry),
+          onInquire: openInquiry,
         })
       : renderInfo({
           brand,
@@ -56,7 +59,6 @@ function draw() {
           onPrev: () => go({ index: (state.index - 1 + products.length) % products.length }, 'back'),
           onNext: () => go({ index: (state.index + 1) % products.length }, 'forward'),
           onSelect: (i) => go({ index: i }, i > state.index ? 'forward' : 'back'),
-          onInquire: openInquiry,
         })
   // Screens that hold resources (the map) clean up before they are replaced.
   app.firstElementChild?.cleanup?.()
@@ -93,6 +95,7 @@ function go(next, dir = 'forward') {
   Object.assign(state, next)
   writeHash()
   closeInquiry()
+  closeViewer()
   document.documentElement.dataset.dir = dir
   if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.startViewTransition(draw)
@@ -102,15 +105,26 @@ function go(next, dir = 'forward') {
 }
 
 // ---- Idle → attract screen -------------------------------------------------
+// The visitor has walked away: reset everything, including the interests
+// they were collecting, so the next person starts with a clean slate.
 let idleTimer
 function armIdle() {
   clearTimeout(idleTimer)
-  idleTimer = setTimeout(() => {
-    if (state.view !== 'home') go({ view: 'home', index: 0 }, 'back')
-    else closeInquiry()
-  }, IDLE_MS)
+  idleTimer = setTimeout(
+    () => {
+      interests.clear()
+      if (state.view !== 'home') go({ view: 'home', index: 0 }, 'back')
+      else {
+        closeInquiry()
+        closeViewer()
+      }
+    },
+    isViewerOpen() ? READING_IDLE_MS : IDLE_MS,
+  )
 }
-for (const evt of ['pointerdown', 'pointermove', 'keydown', 'touchstart']) {
+// `click` fires after the tap that opened a document, so the timer is armed
+// with the reading allowance in place.
+for (const evt of ['pointerdown', 'pointermove', 'click', 'keydown', 'touchstart']) {
   window.addEventListener(evt, armIdle, { passive: true })
 }
 armIdle()
@@ -131,6 +145,8 @@ document.addEventListener(
 // ---- Keyboard (handy for testing on a laptop) ------------------------------
 window.addEventListener('keydown', (e) => {
   if (e.target.matches('input, textarea')) return
+  // The document reader handles Escape itself; don't page products under it.
+  if (isViewerOpen() && e.key !== 'f') return
   switch (e.key) {
     case 'ArrowRight':
       state.view === 'info' ? go({ index: (state.index + 1) % products.length }, 'forward') : go({ view: 'info', index: 0 })
@@ -152,6 +168,12 @@ window.addEventListener('keydown', (e) => {
 // periodically; the call is a no-op when nothing is queued.
 flushPendingLeads()
 setInterval(flushPendingLeads, 60_000)
+
+// Pull the admin-editable QR link now and keep it current while running.
+syncSettings()
+
+// The interests bar sits under every screen; it shows once something is added.
+mountTray(document.body, { onReview: openInquiry })
 
 Object.assign(state, readHash())
 writeHash()

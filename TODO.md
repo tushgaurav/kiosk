@@ -1,0 +1,3 @@
+- in robotics remove machine tending.
+- change the title of range to something more sutaible.
+- in robotics add case studies

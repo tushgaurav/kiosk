@@ -1,26 +1,41 @@
 import { timingSafeEqual } from 'node:crypto'
 import express from 'express'
-import { ADMIN_PASSWORD } from './config.js'
-import { leads } from './db.js'
+import { ADMIN_PASSWORD, DEFAULT_QR_URL } from './config.js'
+import { leads, settings } from './db.js'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-const CSV_COLUMNS = [
-  'id',
-  'created_at',
-  'name',
-  'designation',
-  'company',
-  'email',
-  'phone',
-  'city',
-  'state',
-  'product',
-  'product_name',
-]
+const QR_URL_KEY = 'qr_url'
+/** Longer than this and the QR gets too dense to scan from a kiosk screen. */
+const QR_URL_MAX = 1024
+/** More products than this in one inquiry is not a visitor, it's a bug. */
+const MAX_INTERESTS = 40
+const CSV_COLUMNS = ['id', 'created_at', 'name', 'designation', 'company', 'email', 'phone', 'city', 'state', 'interests']
 
 /** Coerce an incoming value to a trimmed, bounded string. */
 function str(value, max = 160) {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
+}
+
+/**
+ * The products a submission is about, as `[{ id, name }]` without
+ * duplicates. Empty means a general inquiry. Older kiosk builds (and leads
+ * they queued while offline) send a single `product` / `product_name`.
+ */
+function parseInterests(body) {
+  if (Array.isArray(body.interests)) {
+    const seen = new Set()
+    const list = []
+    for (const item of body.interests.slice(0, MAX_INTERESTS)) {
+      const id = str(item?.id, 64)
+      const name = str(item?.name, 120)
+      if (!id || !name || seen.has(id)) continue
+      seen.add(id)
+      list.push({ id, name })
+    }
+    return list
+  }
+  const id = str(body.product, 64)
+  return id && id !== 'general' ? [{ id, name: str(body.product_name, 120) || id }] : []
 }
 
 /** Validate a submission from the kiosk. Returns `{ lead }` or `{ error }`. */
@@ -28,8 +43,7 @@ function parseLead(body) {
   if (!body || typeof body !== 'object') return { error: 'Invalid request body.' }
   const lead = {
     client_id: str(body.client_id, 64) || null,
-    product: str(body.product, 64) || 'general',
-    product_name: str(body.product_name, 120) || 'General',
+    interests: parseInterests(body),
     name: str(body.name, 120),
     designation: str(body.designation, 120),
     company: str(body.company, 160),
@@ -43,6 +57,34 @@ function parseLead(body) {
   return { lead }
 }
 
+/** Kiosk settings with defaults applied — the shape both GET and PUT return. */
+function currentSettings() {
+  return {
+    qr_url: settings.get(QR_URL_KEY) || DEFAULT_QR_URL,
+    default_qr_url: DEFAULT_QR_URL,
+  }
+}
+
+/**
+ * Validate the QR link from the admin. Returns `{ url }` with the trimmed
+ * link, `{ url: null }` when the admin cleared it (restore the default), or
+ * `{ error }`.
+ */
+function parseQrUrl(value) {
+  if (value == null) return { url: null }
+  if (typeof value !== 'string') return { error: 'Invalid link.' }
+  const url = value.trim()
+  if (!url) return { url: null }
+  if (url.length > QR_URL_MAX) return { error: 'That link is too long to fit in a QR code.' }
+  try {
+    const { protocol } = new URL(url)
+    if (protocol !== 'http:' && protocol !== 'https:') throw new Error()
+  } catch {
+    return { error: 'Enter a full link starting with http:// or https://.' }
+  }
+  return { url }
+}
+
 /** Bearer-token check against ADMIN_PASSWORD, constant-time. */
 function requireAdmin(req, res, next) {
   const given = Buffer.from((req.get('authorization') || '').replace(/^Bearer\s+/i, ''))
@@ -54,6 +96,12 @@ function requireAdmin(req, res, next) {
 function csvCell(value) {
   const s = value == null ? '' : String(value)
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+/** One CSV row; the interests column lists product names, `;`-separated. */
+function csvRow(lead) {
+  const values = { ...lead, interests: lead.interests.length ? lead.interests.map((p) => p.name).join('; ') : 'General' }
+  return CSV_COLUMNS.map((c) => csvCell(values[c])).join(',')
 }
 
 /**
@@ -81,7 +129,7 @@ export function createApi() {
 
   // Admin → spreadsheet export. BOM so Excel reads UTF-8 correctly.
   api.get('/leads.csv', requireAdmin, (req, res) => {
-    const rows = leads.all().map((l) => CSV_COLUMNS.map((c) => csvCell(l[c])).join(','))
+    const rows = leads.all().map(csvRow)
     const csv = '\uFEFF' + [CSV_COLUMNS.join(','), ...rows].join('\r\n') + '\r\n'
     res
       .type('text/csv; charset=utf-8')
@@ -93,6 +141,24 @@ export function createApi() {
     const id = Number(req.params.id)
     if (!Number.isInteger(id) || !leads.remove(id)) return res.status(404).json({ error: 'Lead not found.' })
     res.status(204).end()
+  })
+
+  // Kiosk → the link its product QR codes should carry. Public: the kiosk
+  // polls this so an admin change shows up without a reload.
+  api.get('/settings', (req, res) => {
+    res.set('Cache-Control', 'no-store').json(currentSettings())
+  })
+
+  // Admin → change the QR link. An empty `qr_url` restores the default.
+  api.put('/settings', requireAdmin, (req, res) => {
+    if (!req.body || typeof req.body !== 'object' || !('qr_url' in req.body)) {
+      return res.status(400).json({ error: 'Nothing to update.' })
+    }
+    const { url, error } = parseQrUrl(req.body.qr_url)
+    if (error) return res.status(400).json({ error })
+    if (url) settings.set(QR_URL_KEY, url)
+    else settings.remove(QR_URL_KEY)
+    res.json(currentSettings())
   })
 
   api.use((req, res) => res.status(404).json({ error: 'Not found' }))
