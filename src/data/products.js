@@ -161,7 +161,7 @@ export const categories = [
     eyebrow: 'Connect the plant',
     icon: 'monitor',
     tile: 'half',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
   },
 
   // ---- Row 3: 10 ----------------------------------------------------------
@@ -627,7 +627,7 @@ export const products = [
     category: 'software',
     name: 'Production Monitoring',
     icon: 'monitor',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
       'A live view of every line on one screen. Counts, rates, rejects and machine states are pulled from our checkweighers, detectors and conveyors \u2014 and from third-party PLCs \u2014 so supervisors see stoppages and slowdowns the moment they happen, on the floor or on a phone.',
@@ -652,7 +652,7 @@ export const products = [
     category: 'software',
     name: 'OEE',
     icon: 'monitor',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
       'Overall Equipment Effectiveness measured automatically, not on paper. Availability, performance and quality are calculated per machine, line and shift from real machine data, with loss reasons captured at the point of stoppage.',
@@ -677,7 +677,7 @@ export const products = [
     category: 'software',
     name: 'Traceability',
     icon: 'shield',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
       'A record for every pack. Weights, detector events, X-ray results and vision verdicts are stored against batch and product, giving you a complete audit trail for HACCP, IFS, BRC and SQF \u2014 and a fast answer when a customer asks.',
@@ -702,7 +702,7 @@ export const products = [
     category: 'software',
     name: 'Data & Analytics',
     icon: 'monitor',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
       'Turn inspection data into decisions. Trend giveaway, reject rates and contamination events across lines and plants, spot drifting fillers before they cost you product, and export everything to your ERP or BI tools.',
@@ -727,7 +727,7 @@ export const products = [
     category: 'software',
     name: 'Connected Factory',
     icon: 'layers',
-    image: '/products/software.jpg',
+    image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
       'Machines, inspection and software talking to each other. Our systems ship with OPC UA, Modbus and Ethernet as standard; we connect them \u2014 and your existing equipment \u2014 into one plant network with remote diagnostics and secure cloud access.',
