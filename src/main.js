@@ -1,7 +1,8 @@
 import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
 import './style.css'
 
-import { about, brand, products } from './data/products.js'
+import { about, brand, categories, products } from './data/products.js'
 import { renderAbout } from './screens/about.js'
 import { renderHome } from './screens/home.js'
 import { renderInfo } from './screens/info.js'
@@ -11,7 +12,7 @@ import { closeInquiry, installLeadExport, openInquiry } from './components/inqui
 const IDLE_MS = 75_000
 
 const app = document.querySelector('#app')
-const state = { view: 'home', index: 0 }
+const state = { view: 'home', index: 0, page: 'company' }
 
 /** Stand-in "product" so the inquiry sheet works from the About screen. */
 const generalInquiry = { id: 'general', name: 'General', url: brand.site }
@@ -21,50 +22,71 @@ function draw() {
     state.view === 'home'
       ? renderHome({
           brand,
+          categories,
           products,
           onSelect: (i) => go({ view: 'info', index: i }, 'forward'),
-          onAbout: () => go({ view: 'about' }, 'forward'),
+          onAbout: () => go({ view: 'about', page: 'company' }, 'forward'),
         })
       : state.view === 'about'
       ? renderAbout({
           brand,
           about,
-          initial: state.section,
+          categories,
+          page: state.page,
           onHome: () => go({ view: 'home' }, 'back'),
+          onVisit: () => go({ view: 'about', page: 'visit' }, 'forward'),
+          onAbout: () => go({ view: 'about', page: 'company' }, 'back'),
           onExplore: () => go({ view: 'info', index: 0 }, 'forward'),
+          onCategory: (id) => {
+            const i = products.findIndex((p) => p.category === id)
+            go({ view: 'info', index: i < 0 ? 0 : i }, 'forward')
+          },
           onInquire: () => openInquiry(generalInquiry),
         })
       : renderInfo({
           brand,
           product: products[state.index],
+          category: categories.find((c) => c.id === products[state.index].category),
+          siblings: products
+            .map((product, index) => ({ product, index }))
+            .filter(({ product }) => product.category === products[state.index].category),
           index: state.index,
           total: products.length,
           onHome: () => go({ view: 'home' }, 'back'),
           onPrev: () => go({ index: (state.index - 1 + products.length) % products.length }, 'back'),
           onNext: () => go({ index: (state.index + 1) % products.length }, 'forward'),
+          onSelect: (i) => go({ index: i }, i > state.index ? 'forward' : 'back'),
           onInquire: openInquiry,
         })
+  // Screens that hold resources (the map) clean up before they are replaced.
+  app.firstElementChild?.cleanup?.()
   app.replaceChildren(screen)
 }
 
-// ---- Hash routing (#/, #/about, #/p/<product-id>) so screens are deep-linkable ----
+// ---- Hash routing (#/, #/about, #/about/visit, #/p/<product-id>) ----------
 function readHash() {
-  const a = location.hash.match(/^#\/about(?:\/([\w-]+))?$/)
-  if (a) return { view: 'about', index: 0, section: a[1] }
+  const a = location.hash.match(/^#\/about(?:\/(visit))?\b/)
+  if (a) return { view: 'about', index: 0, page: a[1] === 'visit' ? 'visit' : 'company' }
   const m = location.hash.match(/^#\/p\/([\w-]+)/)
   const i = m ? products.findIndex((p) => p.id === m[1]) : -1
-  return i >= 0 ? { view: 'info', index: i } : { view: 'home', index: 0 }
+  return i >= 0 ? { view: 'info', index: i, page: 'company' } : { view: 'home', index: 0, page: 'company' }
 }
 
 function writeHash() {
   const hash =
-    state.view === 'info' ? `#/p/${products[state.index].id}` : state.view === 'about' ? '#/about' : '#/'
+    state.view === 'info'
+      ? `#/p/${products[state.index].id}`
+      : state.view === 'about'
+        ? state.page === 'visit'
+          ? '#/about/visit'
+          : '#/about'
+        : '#/'
   if (location.hash !== hash) history.replaceState(null, '', hash)
 }
 
 window.addEventListener('hashchange', () => {
   const next = readHash()
-  if (next.view !== state.view || next.index !== state.index) go(next, 'forward')
+  if (next.view !== state.view || next.index !== state.index || next.page !== state.page) go(next, 'forward')
 })
 
 function go(next, dir = 'forward') {
