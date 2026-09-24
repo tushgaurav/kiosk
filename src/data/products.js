@@ -109,7 +109,7 @@ export const about = {
     },
   ],
   visit: {
-    eyebrow: 'Visit us',
+    eyebrow: 'Visit Us',
     title: 'Find us in IMT Manesar.',
     note: 'On the Delhi\u2013Jaipur highway (NH-48), south-west of Gurugram.',
   },

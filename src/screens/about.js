@@ -25,7 +25,7 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
     `<section class="screen screen--about">
        <header class="topbar">
          <div class="topbar__actions">
-           <button class="pill pill--visit" type="button">${icon('pin')}<span>Visit us</span></button>
+           <button class="pill pill--visit" type="button">${icon('pin')}<span>Visit Us</span></button>
            <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
          </div>
        </header>
