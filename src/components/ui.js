@@ -32,7 +32,6 @@ const ICONS = {
   pin: `<path d="M12 21.5s-6.5-5.6-6.5-10.8a6.5 6.5 0 0 1 13 0C18.5 15.9 12 21.5 12 21.5z"/><circle cx="12" cy="10.7" r="2.3"/>`,
   plus: `<path d="M12 5v14"/><path d="M5 12h14"/>`,
   minus: `<path d="M5 12h14"/>`,
-  target: `<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 2.5v3"/><path d="M12 18.5v3"/><path d="M2.5 12h3"/><path d="M18.5 12h3"/>`,
   // Datasheets, brochures and manuals
   doc: `<path d="M6.5 3h7.5l4.5 4.5V21h-12z"/><path d="M14 3v5h4.5"/><path d="M9.5 13h5"/><path d="M9.5 16.5h5"/>`,
   // Product-page advantages & applications
@@ -83,25 +82,31 @@ export function media(product, cls = '', alt = '') {
 }
 
 /**
- * Product image/video with a designed placeholder when the file is absent.
- * A missing video clip falls back to its poster image; a missing image to
+ * Image/video with a designed placeholder when the file is absent. A
+ * missing video clip falls back to its poster image; a missing image to
  * the placeholder. Keeps the layout identical either way.
+ *
+ * `item` is `{ image, video, icon, name }`. `base` is the class the figure
+ * and its `__media` / `__fallback` parts are named after: `hero` for the
+ * product cover, `casefig` for case-study media.
  */
-export function figure(product) {
+export function figure(item, base = 'hero') {
   const fig = el(
-    `<figure class="hero" data-icon="${product.icon}">
-       ${media(product, 'hero__media', product.name)}
-       <div class="hero__fallback">${icon(product.icon)}<span>${product.name}</span></div>
+    `<figure class="${base}" data-icon="${item.icon}">
+       ${item.image || item.video ? media(item, `${base}__media`, item.name ?? '') : ''}
+       <div class="${base}__fallback">${icon(item.icon)}<span>${item.name ?? ''}</span></div>
      </figure>`,
   )
   const watch = (node) => {
+    if (!node) return fig.classList.add('is-fallback')
     const ready = node.tagName === 'VIDEO' ? 'loadeddata' : 'load'
+    if (node.tagName === 'IMG' && node.complete && node.naturalWidth) return fig.classList.add('is-loaded')
     node.addEventListener(ready, () => fig.classList.add('is-loaded'), { once: true })
     node.addEventListener(
       'error',
       () => {
-        if (node.tagName === 'VIDEO' && product.image) {
-          const still = el(media({ image: product.image }, 'hero__media', product.name))
+        if (node.tagName === 'VIDEO' && item.image) {
+          const still = el(media({ image: item.image }, `${base}__media`, item.name ?? ''))
           node.replaceWith(still)
           watch(still)
         } else {
@@ -111,7 +116,7 @@ export function figure(product) {
       { once: true },
     )
   }
-  watch(fig.querySelector('.hero__media'))
+  watch(fig.querySelector(`.${base}__media`))
   return fig
 }
 

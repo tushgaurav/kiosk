@@ -31,7 +31,21 @@
  *   big figures on dark tiles. Keep `value` short (a number or one word).
  * - Range: `range`, a list of groups, each with `title` (optional) and
  *   `items` of `{ name, note, docs }`. Model codes, conveyor types, etc.
- *   `rangeLabel` (optional) renames the card, e.g. "Configurations".
+ *   `rangeLabel` names the card after what the list actually is: "Models",
+ *   "Coil types", "Configurations", "Capabilities", "Features"... Products
+ *   that leave it out get "What's included".
+ * - Case studies: `caseStudies`, a list of `{ industry, title, video, image,
+ *   challenge, solution, results }`. `industry` is the small tag above the
+ *   title (customer or sector, e.g. "Jayanti Foods · Alwar"). `video`
+ *   (optional) is a short muted MP4 loop and `image` its poster, or a plain
+ *   photo when there is no clip; both live under /public/case-studies/ and
+ *   a styled placeholder shows if the files are missing. `results` is up
+ *   to three `{ value, label }` figures. Adds a "Case studies" card of
+ *   tiles; tapping a tile opens the study full-screen with the clip large
+ *   and the full story.
+ *   Case-study media: site videos and photos supplied by SafeSurge
+ *   (clips cut to ~9 s, muted, 720p) plus the Crimson Tech FMCG use-case
+ *   deck for the vision descriptions.
  * - Documents: `docs`, a list of ids from `documents` below. Adds a
  *   "Documents" card listing the manufacturer's datasheets, brochures and
  *   manuals; tapping one opens it full-screen on the kiosk. A range item
@@ -51,15 +65,12 @@ export const brand = {
 }
 
 /**
- * Content for the About screen (#/about) and its Visit-us subpage
- * (#/about/visit).
+ * Content for the About screen (#/about).
  *
- * - The About page is a title, the head-office photo and a deck of cards the
- *   visitor swipes through. A card has a `label` (used in the card index)
- *   and one of: `text` + `stats`, `categories: true` (lists the home-screen
- *   categories), `groups` of chips, or numbered `steps`.
- * - The Visit page is an interactive map centred on `location.lat/lng`,
- *   with the address plate and a QR that opens directions on a phone.
+ * The About page is a title, the head-office photo and a deck of cards the
+ * visitor swipes through. A card has a `label` (used in the card index)
+ * and one of: `text` + `stats`, `categories: true` (lists the home-screen
+ * categories), `groups` of chips, or numbered `steps`.
  */
 export const about = {
   company: 'Safesurge Inspection Technologies Pvt. Ltd.',
@@ -67,14 +78,6 @@ export const about = {
   title: 'Inspection technology, engineered in India.',
   image: '/safesurge-images/hq.png',
   imageAlt: 'SafeSurge head office at IMT Manesar',
-  location: {
-    place: 'IMT Manesar, Gurugram',
-    coords: '28.36\u00b0 N \u00b7 76.93\u00b0 E',
-    // Sector 4, IMT Manesar. Nudge these to the exact plot if needed.
-    lat: 28.3563,
-    lng: 76.9312,
-    zoom: 15,
-  },
   cards: [
     {
       id: 'who',
@@ -92,43 +95,12 @@ export const about = {
       label: 'What we build',
       categories: true,
     },
-    {
-      id: 'markets',
-      label: 'Industries & partners',
-      groups: [
-        { label: 'Industries', items: ['Food Processing', 'FMCG', 'Pharmaceutical', 'Packaging', 'Manufacturing'] },
-        {
-          label: 'Technology partners',
-          items: [
-            { name: 'A&D Company', note: 'Japan \u00b7 Checkweighing' },
-            { name: 'Mesutronic', note: 'Germany \u00b7 Metal detection & X-ray' },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'approach',
-      label: 'How we work',
-      steps: [
-        'We start with your production challenge, not a catalogue.',
-        'Feasibility trials on your actual product before you commit.',
-        'Engineered to integrate into your existing line.',
-      ],
-    },
   ],
-  visit: {
-    eyebrow: 'Visit Us',
-    title: 'Find us in IMT Manesar.',
-    note: 'On the Delhi\u2013Jaipur highway (NH-48), south-west of Gurugram.',
-  },
   contact: {
     address: 'Plot 107, Sector 4, IMT Manesar, Gurugram, Haryana 122050',
     phone: '+91 124 426 2612',
     email: 'sales@safesurgeindia.com',
     web: 'safesurge.co.in',
-    // What the "Scan for directions" QR opens on the visitor's phone.
-    mapsUrl:
-      'https://www.google.com/maps/search/?api=1&query=Safesurge+Inspection+Technologies+Plot+107+Sector+4+IMT+Manesar+Gurugram',
   },
 }
 
@@ -451,6 +423,39 @@ export const products = [
         ],
       },
     ],
+    caseStudies: [
+      {
+        industry: 'Jayanti Foods \u00b7 Alwar, Rajasthan',
+        title: 'Vertical lifter for snack cartons and bulk bags',
+        video: '/case-studies/vertical-lifter-jayanti.mp4',
+        image: '/case-studies/vertical-lifter-jayanti.jpg',
+        challenge:
+          'Finished goods \u2014 cartons of chips, flat cartons, packing-roll plates and large polythene bags of namkeen \u2014 had to move between floors of the plant, with product formats changing through the day.',
+        solution:
+          'A SafeSurge vertical lifter fed by roller conveyors, with a touch-screen HMI that stores a recipe per product format. The operator picks the format and the lifter sets its own cycle; forward and reverse travel and every sensor are visible on screen.',
+        results: [
+          { value: '6', label: 'Product recipes' },
+          { value: 'Cartons \u00b7 Bags', label: 'Formats handled' },
+          { value: 'One tap', label: 'Changeover' },
+        ],
+      },
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Frozen meat products \u00b7 Packing hall',
+        title: 'Hygienic packing line for frozen meatballs',
+        video: '/case-studies/meat-packing-line.mp4',
+        image: '/case-studies/meat-packing-line.jpg',
+        challenge:
+          'Portioning, weighing and bagging frozen meatballs in a chilled, washdown room, with product moving between many operators without touching the floor.',
+        solution:
+          'A stainless-steel conveying line with raised in-line work tables, integrated weigh stations and a band sealer at the end, built to the hygiene standards of a red-zone meat room.',
+        results: [
+          { value: 'SS 304', label: 'Washdown build' },
+          { value: 'Chilled', label: 'Room-rated' },
+          { value: 'One line', label: 'Weigh \u00b7 Pack \u00b7 Seal' },
+        ],
+      },
+    ],
   },
   {
     id: 'product-transfer',
@@ -466,6 +471,7 @@ export const products = [
       { label: 'Control', value: 'PLC \u00b7 Sensors' },
       { label: 'Build', value: 'Food-grade SS' },
     ],
+    rangeLabel: 'Modules',
     range: [
       {
         items: [
@@ -475,6 +481,24 @@ export const products = [
           { name: 'Accumulation table', note: 'Buffer product during short downstream stops.' },
           { name: 'Vertical lifter', note: 'Move cases or trays between floor levels.' },
           { name: 'Reject station', note: 'Collect rejected packs from checkweighers, detectors and X-ray in a lockable bin.' },
+        ],
+      },
+    ],
+    caseStudies: [
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Food & nutrition \u00b7 Jar filling line',
+        title: 'Slat-chain accumulation table for jars',
+        video: '/case-studies/jar-accumulator.mp4',
+        image: '/case-studies/jar-accumulator.jpg',
+        challenge:
+          'Wide-mouth jars of spreads and powders arrived from the filler faster than the downstream machines could take them, so every short stop downstream stopped the filler too.',
+        solution:
+          'A multi-lane slat-chain accumulation table between filler and packer. Jars fan out across the lanes when the line backs up and merge back into single file when it clears, so the filler keeps running through short stops.',
+        results: [
+          { value: 'Multi-lane', label: 'Slat chain' },
+          { value: 'Zero-pressure', label: 'Accumulation' },
+          { value: 'Filler', label: 'Keeps running' },
         ],
       },
     ],
@@ -493,6 +517,7 @@ export const products = [
       { label: 'Scope', value: 'Tanks \u00b7 Hoppers \u00b7 Feeders' },
       { label: 'Design', value: 'Hygienic' },
     ],
+    rangeLabel: 'Equipment',
     range: [
       {
         items: [
@@ -525,6 +550,7 @@ export const products = [
       { label: 'Protection', value: 'IP65' },
     ],
     docs: ['ad-4961', 'ad-4961a', 'ad-4961-manual'],
+    rangeLabel: 'Models',
     range: [
       {
         title: 'Imported \u00b7 Made in Japan',
@@ -559,6 +585,39 @@ export const products = [
         ],
       },
     ],
+    caseStudies: [
+      {
+        industry: 'Bambino \u00b7 Vermicelli & pasta',
+        title: 'In-line checkweighing of vermicelli pouches',
+        video: '/case-studies/checkweigher-bambino.mp4',
+        image: '/case-studies/checkweigher-bambino.jpg',
+        challenge:
+          'Pillow pouches off the vertical form-fill-seal machine needed a weight check on every pack, without slowing the packer or adding a manual sampling step.',
+        solution:
+          'An AD-4961 checkweigher on the packer outfeed weighs each pouch in motion and diverts under- and over-weight packs to a reject bin, logging every result for the shift report.',
+        results: [
+          { value: 'Every pack', label: 'Weighed in motion' },
+          { value: 'Auto', label: 'Under / over reject' },
+          { value: 'Logged', label: 'Shift records' },
+        ],
+      },
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Powders & supplements \u00b7 Container line',
+        title: 'Checkweigher on an HDPE container filling line',
+        video: '/case-studies/checkweigher-containers.mp4',
+        image: '/case-studies/checkweigher-containers.jpg',
+        challenge:
+          'Filled containers had to be verified for net weight before capping and labelling, on a line running at steady speed with a stainless, easy-clean build.',
+        solution:
+          'An A&D checkweigher with stainless-steel frame and 7\u2033 colour touch panel integrated into the container conveyor, with product memory for each pack size and a pusher reject for off-weight containers.',
+        results: [
+          { value: 'A&D', label: 'AD-4961 platform' },
+          { value: '1,000', label: 'Product memory' },
+          { value: 'IP65', label: 'Washdown' },
+        ],
+      },
+    ],
   },
   {
     id: 'metal-detectors',
@@ -576,9 +635,9 @@ export const products = [
       { label: 'Connectivity', value: 'Ethernet \u00b7 OPC UA' },
     ],
     docs: ['metron-05-d', 'metron-05-d-datasheet', 'metron-05-c', 'metron-05-ci', 'metron-07-ci', 'metron-07-ci-datasheet'],
+    rangeLabel: 'Coil types',
     range: [
       {
-        title: 'Coil types',
         items: [
           {
             name: 'D coil',
@@ -595,6 +654,40 @@ export const products = [
             note: 'Tunnel detector with evaluation electronics built in \u2014 no control cabinet. METRON 05 CI for mid-range duty, METRON 07 CI for the tightest specs.',
             docs: ['metron-05-ci', 'metron-07-ci'],
           },
+        ],
+      },
+    ],
+    caseStudies: [
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Powders & supplements \u00b7 Container line',
+        title: 'Tunnel detector on a guarded container line',
+        video: '/case-studies/metal-detector-containers.mp4',
+        image: '/case-studies/metal-detector-containers.jpg',
+        challenge:
+          'Filled HDPE containers had to be screened for metal contamination as a critical control point, inside an existing guarded conveyor section with limited space.',
+        solution:
+          'A tunnel metal detector integrated into the guarded conveyor with its own control panel, stack light and reject, sized to the container height so every jar passes through the aperture at line speed.',
+        results: [
+          { value: 'Fe \u00b7 NFe \u00b7 SS', label: 'Detected' },
+          { value: 'In-guard', label: 'Retrofit' },
+          { value: 'HACCP', label: 'Control point' },
+        ],
+      },
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Flour milling \u00b7 Atta bagging',
+        title: 'Metal detection on atta bags after the bagger',
+        video: '/case-studies/metal-detector-flour-bags.mp4',
+        image: '/case-studies/metal-detector-flour-bags.jpg',
+        challenge:
+          'Filled flour bags coming off multiple bagging machines needed a final metal check in a dusty mill environment, without adding operators or slowing the baggers.',
+        solution:
+          'Tunnel metal detectors on conveyors behind each bagger, with detection heads and control units built for dust and a large aperture that takes the full bag. Alarms and rejects are signalled on a stack light at each station.',
+        results: [
+          { value: 'Per bagger', label: 'One detector each' },
+          { value: 'Full bag', label: 'Aperture' },
+          { value: 'Dust-rated', label: 'Build' },
         ],
       },
     ],
@@ -615,6 +708,7 @@ export const products = [
       { label: 'Reject', value: 'One station' },
     ],
     docs: ['ad-4961', 'metron-05-ci', 'metron-07-ci'],
+    rangeLabel: 'How it works',
     range: [
       {
         items: [
@@ -645,6 +739,7 @@ export const products = [
       { label: 'Particle size', value: '\u2264 10 mm' },
     ],
     docs: ['metron-05-cr', 'quicktron-05-a', 'quicktron-03-r'],
+    rangeLabel: 'Models',
     range: [
       {
         items: [
@@ -666,6 +761,25 @@ export const products = [
         ],
       },
     ],
+    caseStudies: [
+      {
+        // TODO: confirm the customer name and the exact function of the unit
+        // (photos show a stainless T-joint with pneumatic actuator on an
+        // overhead conveying line at a snacks plant).
+        industry: 'Snacks \u00b7 Pneumatic conveying',
+        title: 'Stainless T-joint diverter on an overhead product line',
+        image: '/case-studies/pipeline-tjoint.jpg',
+        challenge:
+          'Product travelling in overhead stainless pipework to the packing machines had no way to be diverted without stopping the line and opening the pipe.',
+        solution:
+          'A fabricated stainless-steel T-joint with a pneumatically actuated diverter, welded into the existing overhead line above the packers, so a controlled portion of the flow can be sent to a second outlet on demand.',
+        results: [
+          { value: 'SS', label: 'Sanitary welds' },
+          { value: 'Pneumatic', label: 'Actuation' },
+          { value: 'Inline', label: 'No line stop' },
+        ],
+      },
+    ],
   },
   {
     id: 'x-ray',
@@ -683,6 +797,7 @@ export const products = [
       { label: 'Also checks', value: 'Count \u00b7 Fill' },
     ],
     docs: ['easyscope-st', 'easyscope-400', 'easyscope-600'],
+    rangeLabel: 'Capabilities',
     range: [
       {
         items: [
@@ -713,6 +828,7 @@ export const products = [
       { label: 'Handling', value: 'Single \u00b7 Multi-pick' },
       { label: 'Integration', value: 'Conveyor \u00b7 CW \u00b7 Vision' },
     ],
+    rangeLabel: 'Applications',
     range: [
       {
         items: [
@@ -738,6 +854,7 @@ export const products = [
       { label: 'Patterns', value: 'Programmable' },
       { label: 'Shift', value: '24 / 7' },
     ],
+    rangeLabel: 'Applications',
     range: [
       {
         items: [
@@ -764,6 +881,7 @@ export const products = [
       { label: 'Packer', value: 'Robotic' },
       { label: 'Sealer', value: 'Tape \u00b7 Hot-melt' },
     ],
+    rangeLabel: 'Machines',
     range: [
       {
         items: [
@@ -774,156 +892,51 @@ export const products = [
       },
     ],
   },
-  {
-    id: 'machine-tending',
-    category: 'robotics',
-    name: 'Machine Tending',
-    icon: 'wrench',
-    image: '/products/robotics.jpg',
-    url: 'https://safesurge.co.in/',
-    description:
-      'Robots that load and unload your existing machines \u2014 fillers, presses, moulders and packaging equipment \u2014 so they run without an operator standing by. We handle grippers, safety guarding and the PLC handshake; the machine keeps its cycle and the operator moves to higher-value work.',
-    facts: [
-      { label: 'Fits', value: 'Existing machines' },
-      { label: 'Safety', value: 'Guarded \u00b7 Collaborative' },
-      { label: 'Integration', value: 'PLC handshake' },
-    ],
-    range: [
-      {
-        items: [
-          { name: 'Load / unload', note: 'Feed parts or packs into a machine and take finished product out.' },
-          { name: 'Tray & magazine handling', note: 'Keep infeed magazines topped up and outfeed trays cleared.' },
-          { name: 'Collaborative cells', note: 'Cobots for lower-speed tasks alongside operators.' },
-          { name: 'Safety & guarding', note: 'Fencing, light curtains and safety PLC to current standards.' },
-        ],
-      },
-    ],
-  },
 
   // =========================================================================
   // Industry 5.0 Software
   // =========================================================================
+  // One page for the whole suite: the former sub-categories (Production
+  // Monitoring, OEE, Traceability, Data & Analytics, Connected Factory) are
+  // the entries of its Features card.
   {
-    id: 'production-monitoring',
+    id: 'software',
     category: 'software',
-    name: 'Production Monitoring',
+    name: 'Industry 5.0 Software',
     icon: 'monitor',
     image: '/products/software.png',
     url: 'https://safesurge.co.in/',
     description:
-      'A live view of every line on one screen. Counts, rates, rejects and machine states are pulled from our checkweighers, detectors and conveyors \u2014 and from third-party PLCs \u2014 so supervisors see stoppages and slowdowns the moment they happen, on the floor or on a phone.',
+      'One software suite that connects the plant. Production monitoring, OEE, traceability, analytics and machine connectivity, built on live data from our checkweighers, detectors, X-ray and vision systems \u2014 and from your existing PLCs \u2014 so supervisors see every line the moment something changes, on the floor, in the office or on a phone.',
     facts: [
-      { label: 'View', value: 'Real-time' },
-      { label: 'Sources', value: 'Machines \u00b7 PLCs' },
+      { label: 'Modules', value: '5' },
+      { label: 'Protocols', value: 'OPC UA \u00b7 Modbus \u00b7 Ethernet' },
       { label: 'Access', value: 'Floor \u00b7 Phone \u00b7 Office' },
     ],
+    rangeLabel: 'Features',
     range: [
       {
         items: [
-          { name: 'Line dashboards', note: 'Throughput, rejects and machine state per line, live.' },
-          { name: 'Downtime alerts', note: 'Notify supervisors when a machine stops or slows.' },
-          { name: 'Shift reports', note: 'Automatic end-of-shift summaries by line and product.' },
-          { name: 'Andon displays', note: 'Large-format status boards for the shop floor.' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'oee',
-    category: 'software',
-    name: 'OEE',
-    icon: 'monitor',
-    image: '/products/software.png',
-    url: 'https://safesurge.co.in/',
-    description:
-      'Overall Equipment Effectiveness measured automatically, not on paper. Availability, performance and quality are calculated per machine, line and shift from real machine data, with loss reasons captured at the point of stoppage.',
-    facts: [
-      { label: 'Metrics', value: 'Availability \u00b7 Performance \u00b7 Quality' },
-      { label: 'Granularity', value: 'Machine \u00b7 Line \u00b7 Shift' },
-      { label: 'Losses', value: 'Reason-coded' },
-    ],
-    range: [
-      {
-        items: [
-          { name: 'OEE dashboards', note: 'Live and historical OEE for every asset.' },
-          { name: 'Loss analysis', note: 'Rank the six big losses by time and cost.' },
-          { name: 'Reason capture', note: 'Operators code downtime on the HMI as it happens.' },
-          { name: 'Target tracking', note: 'Compare shifts, lines and plants against goals.' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'traceability',
-    category: 'software',
-    name: 'Traceability',
-    icon: 'shield',
-    image: '/products/software.png',
-    url: 'https://safesurge.co.in/',
-    description:
-      'A record for every pack. Weights, detector events, X-ray results and vision verdicts are stored against batch and product, giving you a complete audit trail for HACCP, IFS, BRC and SQF \u2014 and a fast answer when a customer asks.',
-    facts: [
-      { label: 'Records', value: 'Per pack \u00b7 Per batch' },
-      { label: 'Audits', value: 'HACCP \u00b7 IFS \u00b7 BRC \u00b7 SQF' },
-      { label: 'Recall', value: 'Minutes, not days' },
-    ],
-    range: [
-      {
-        items: [
-          { name: 'Batch records', note: 'Every inspection result tied to batch, product and time.' },
-          { name: 'Inspection logs', note: 'Checkweigher, detector, X-ray and vision events in one place.' },
-          { name: 'Serialisation & codes', note: 'Print, verify and record unit-level codes.' },
-          { name: 'Audit reports', note: 'Export audit-ready reports on demand.' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'data-analytics',
-    category: 'software',
-    name: 'Data & Analytics',
-    icon: 'monitor',
-    image: '/products/software.png',
-    url: 'https://safesurge.co.in/',
-    description:
-      'Turn inspection data into decisions. Trend giveaway, reject rates and contamination events across lines and plants, spot drifting fillers before they cost you product, and export everything to your ERP or BI tools.',
-    facts: [
-      { label: 'Insights', value: 'Giveaway \u00b7 Rejects \u00b7 Trends' },
-      { label: 'Export', value: 'ERP \u00b7 BI \u00b7 CSV' },
-      { label: 'Scope', value: 'Line \u00b7 Plant \u00b7 Group' },
-    ],
-    range: [
-      {
-        items: [
-          { name: 'Giveaway analysis', note: 'See over-fill by product and filler head, and tighten it.' },
-          { name: 'Reject analytics', note: 'Which products, shifts and machines reject most, and why.' },
-          { name: 'Trend & drift', note: 'Catch weight and quality drift before it becomes rejects.' },
-          { name: 'ERP / BI export', note: 'Scheduled exports and APIs for your existing tools.' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'connected-factory',
-    category: 'software',
-    name: 'Connected Factory',
-    icon: 'layers',
-    image: '/products/software.png',
-    url: 'https://safesurge.co.in/',
-    description:
-      'Machines, inspection and software talking to each other. Our systems ship with OPC UA, Modbus and Ethernet as standard; we connect them \u2014 and your existing equipment \u2014 into one plant network with remote diagnostics and secure cloud access.',
-    facts: [
-      { label: 'Protocols', value: 'OPC UA \u00b7 Modbus \u00b7 Ethernet' },
-      { label: 'Access', value: 'Remote \u00b7 Cloud' },
-      { label: 'Scope', value: 'New + existing' },
-    ],
-    range: [
-      {
-        items: [
-          { name: 'Machine connectivity', note: 'Bring SafeSurge and third-party machines onto one network.' },
-          { name: 'Remote diagnostics', note: 'Our engineers see faults before they call you.' },
-          { name: 'Cloud dashboards', note: 'Secure access to plant data from anywhere.' },
-          { name: 'MES / ERP integration', note: 'Orders down, production data up.' },
+          {
+            name: 'Production Monitoring',
+            note: 'Live dashboards with counts, rates, rejects and machine states from SafeSurge machines and third-party PLCs. Downtime alerts, automatic shift reports and Andon boards for the shop floor.',
+          },
+          {
+            name: 'OEE',
+            note: 'Availability, performance and quality measured per machine, line and shift from real machine data. Operators code loss reasons on the HMI as they happen; the six big losses are ranked by time and cost.',
+          },
+          {
+            name: 'Traceability',
+            note: 'A record for every pack: weights, detector events, X-ray results and vision verdicts tied to batch and product. Serialisation, inspection logs and audit-ready reports for HACCP, IFS, BRC and SQF.',
+          },
+          {
+            name: 'Data & Analytics',
+            note: 'Giveaway by product and filler head, reject rates by shift and machine, and weight or quality drift caught before it becomes rejects. Scheduled exports and APIs for your ERP and BI tools.',
+          },
+          {
+            name: 'Connected Factory',
+            note: 'SafeSurge and existing machines on one plant network over OPC UA, Modbus and Ethernet, with remote diagnostics, secure cloud dashboards and MES / ERP integration.',
+          },
         ],
       },
     ],
@@ -946,6 +959,7 @@ export const products = [
       { label: 'Model', value: 'Trained on you' },
       { label: 'Integration', value: 'Conveyor \u00b7 Reject' },
     ],
+    rangeLabel: 'Capabilities',
     range: [
       {
         items: [
@@ -953,6 +967,40 @@ export const products = [
           { name: 'AI model', note: 'Trained on your good and bad samples; no rule-writing.' },
           { name: 'Reject integration', note: 'Pusher, air-jet or drop-flap reject on the same conveyor.' },
           { name: 'Continuous learning', note: 'Flag new defect types and retrain without stopping the line.' },
+        ],
+      },
+    ],
+    caseStudies: [
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Frozen breads \u00b7 Ahmedabad',
+        title: 'Naan inspection from both sides at line speed',
+        video: '/case-studies/vision-naan.mp4',
+        image: '/case-studies/vision-naan.jpg',
+        challenge:
+          'Every naan had to be checked for size, shape, colour, burn marks and stray hair before freezing \u2014 on both faces \u2014 a job that manual inspection could not do consistently at line speed.',
+        solution:
+          'A SafeSurge AI Vision Inspection Station on the conveyor with cameras above and below the belt. An AI model trained on the customer\u2019s own product grades each naan and drives the reject; a live dashboard shows captures, rejects and the defect mix by camera and site.',
+        results: [
+          { value: 'Front + back', label: 'Both faces' },
+          { value: '3', label: 'Defect classes tracked' },
+          { value: 'Live', label: 'Quality dashboard' },
+        ],
+      },
+      {
+        // TODO: confirm the full customer name ("CG FP" on the HMI).
+        industry: 'CG FP \u00b7 Instant noodles',
+        title: 'Counting and cook-state check on noodle cakes',
+        video: '/case-studies/vision-noodles.mp4',
+        image: '/case-studies/vision-noodles.jpg',
+        challenge:
+          'Noodle cakes leaving the fryer on multi-lane conveyors had to be counted and any over- or under-cooked cake caught before packing, at a rate no operator could keep up with.',
+        solution:
+          'An AI camera station over the lanes detects every cake, classifies it as good, overcooked or undercooked and keeps a running count per class on the operator screen \u2014 integrated with the plant\u2019s Crimson Tech vision software.',
+        results: [
+          { value: '4,000', label: 'Cakes in the run' },
+          { value: '3,994', label: 'Passed' },
+          { value: '6', label: 'Rejected' },
         ],
       },
     ],
@@ -971,6 +1019,7 @@ export const products = [
       { label: 'Method', value: 'AI \u00b7 Anomaly' },
       { label: 'Manual checks', value: 'Replaced' },
     ],
+    rangeLabel: 'Capabilities',
     range: [
       {
         items: [
@@ -978,6 +1027,40 @@ export const products = [
           { name: 'Packaging defects', note: 'Torn or wrinkled seals, damaged cartons, misapplied lids.' },
           { name: 'Missing components', note: 'Absent or misplaced parts, inserts and closures.' },
           { name: 'Foreign material', note: 'Visible contaminants on product or inside the pack.' },
+        ],
+      },
+    ],
+    caseStudies: [
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Potato processing \u00b7 Raw material grading',
+        title: 'Defect detection on whole potatoes',
+        video: '/case-studies/vision-potato.mp4',
+        image: '/case-studies/vision-potato.jpg',
+        challenge:
+          'Cuts, rot, greening and mechanical damage on incoming potatoes were being caught by eye on a fast roller conveyor, letting defective tubers reach the slicer.',
+        solution:
+          'A camera over the roller conveyor with an AI detection model that marks each defect on each tuber with a confidence score, so grading is consistent from shift to shift and the output can drive a reject.',
+        results: [
+          { value: 'Per tuber', label: 'Defects marked' },
+          { value: 'Scored', label: 'Confidence per find' },
+          { value: 'Roller belt', label: 'Inspected in motion' },
+        ],
+      },
+      {
+        // TODO: confirm the customer name before showing it on the kiosk.
+        industry: 'Snacks \u00b7 Fried chips',
+        title: 'Spotting burnt and defective chips on the line',
+        video: '/case-studies/vision-chips.mp4',
+        image: '/case-studies/vision-chips.jpg',
+        challenge:
+          'Dark, burnt or peel-spotted chips and fragments were passing through with good product on a wide, fast belt after the fryer.',
+        solution:
+          'An AI vision station over the belt detects and classifies each chip as it passes, flagging defective pieces and keeping running good / defect statistics on the operator screen for tuning the fryer.',
+        results: [
+          { value: 'Full width', label: 'Belt covered' },
+          { value: 'Each chip', label: 'Classified' },
+          { value: 'Live', label: 'Good / defect ratio' },
         ],
       },
     ],
@@ -996,6 +1079,7 @@ export const products = [
       { label: 'Codes', value: 'OCR \u00b7 OCV \u00b7 1D / 2D' },
       { label: 'Records', value: 'Every pack' },
     ],
+    rangeLabel: 'Capabilities',
     range: [
       {
         items: [

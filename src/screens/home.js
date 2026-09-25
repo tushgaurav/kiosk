@@ -27,7 +27,14 @@ export function renderHome({ brand, categories, products, onSelect, onAbout }) {
   const tiles = screen.querySelector('.tiles')
   categories.forEach((c, i) => {
     const first = products.findIndex((p) => p.category === c.id)
-    const subs = products.filter((p) => p.category === c.id).map((p) => p.name)
+    const members = products.filter((p) => p.category === c.id)
+    // A category that is one product of the same name (e.g. the software
+    // suite) lists that product's features here, rather than repeating
+    // the tile's own name.
+    const subs =
+      members.length === 1 && members[0].name === c.name
+        ? (members[0].range ?? []).flatMap((g) => (g.items ?? []).map((it) => it.name))
+        : members.map((p) => p.name)
 
     const tile = el(
       `<button class="tile tile--${c.tile}" type="button" style="--i:${i}">

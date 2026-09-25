@@ -6,6 +6,7 @@ import { about, brand, categories, products } from './data/products.js'
 import { renderAbout } from './screens/about.js'
 import { renderHome } from './screens/home.js'
 import { renderInfo } from './screens/info.js'
+import { closeCaseStudy, isCaseStudyOpen } from './components/casestudy.js'
 import { closeInquiry, flushPendingLeads, openInquiry } from './components/inquiry.js'
 import { interests } from './components/interests.js'
 import { mountTray } from './components/tray.js'
@@ -18,7 +19,7 @@ const IDLE_MS = 75_000
 const READING_IDLE_MS = 180_000
 
 const app = document.querySelector('#app')
-const state = { view: 'home', index: 0, page: 'company' }
+const state = { view: 'home', index: 0 }
 
 function draw() {
   const screen =
@@ -28,17 +29,14 @@ function draw() {
           categories,
           products,
           onSelect: (i) => go({ view: 'info', index: i }, 'forward'),
-          onAbout: () => go({ view: 'about', page: 'company' }, 'forward'),
+          onAbout: () => go({ view: 'about' }, 'forward'),
         })
       : state.view === 'about'
       ? renderAbout({
           brand,
           about,
           categories,
-          page: state.page,
           onHome: () => go({ view: 'home' }, 'back'),
-          onVisit: () => go({ view: 'about', page: 'visit' }, 'forward'),
-          onAbout: () => go({ view: 'about', page: 'company' }, 'back'),
           onExplore: () => go({ view: 'info', index: 0 }, 'forward'),
           onCategory: (id) => {
             const i = products.findIndex((p) => p.category === id)
@@ -60,35 +58,27 @@ function draw() {
           onNext: () => go({ index: (state.index + 1) % products.length }, 'forward'),
           onSelect: (i) => go({ index: i }, i > state.index ? 'forward' : 'back'),
         })
-  // Screens that hold resources (the map) clean up before they are replaced.
+  // Screens that hold resources clean up before they are replaced.
   app.firstElementChild?.cleanup?.()
   app.replaceChildren(screen)
 }
 
-// ---- Hash routing (#/, #/about, #/about/visit, #/p/<product-id>) ----------
+// ---- Hash routing (#/, #/about, #/p/<product-id>) -------------------------
 function readHash() {
-  const a = location.hash.match(/^#\/about(?:\/(visit))?\b/)
-  if (a) return { view: 'about', index: 0, page: a[1] === 'visit' ? 'visit' : 'company' }
+  if (/^#\/about\b/.test(location.hash)) return { view: 'about', index: 0 }
   const m = location.hash.match(/^#\/p\/([\w-]+)/)
   const i = m ? products.findIndex((p) => p.id === m[1]) : -1
-  return i >= 0 ? { view: 'info', index: i, page: 'company' } : { view: 'home', index: 0, page: 'company' }
+  return i >= 0 ? { view: 'info', index: i } : { view: 'home', index: 0 }
 }
 
 function writeHash() {
-  const hash =
-    state.view === 'info'
-      ? `#/p/${products[state.index].id}`
-      : state.view === 'about'
-        ? state.page === 'visit'
-          ? '#/about/visit'
-          : '#/about'
-        : '#/'
+  const hash = state.view === 'info' ? `#/p/${products[state.index].id}` : state.view === 'about' ? '#/about' : '#/'
   if (location.hash !== hash) history.replaceState(null, '', hash)
 }
 
 window.addEventListener('hashchange', () => {
   const next = readHash()
-  if (next.view !== state.view || next.index !== state.index || next.page !== state.page) go(next, 'forward')
+  if (next.view !== state.view || next.index !== state.index) go(next, 'forward')
 })
 
 function go(next, dir = 'forward') {
@@ -96,6 +86,7 @@ function go(next, dir = 'forward') {
   writeHash()
   closeInquiry()
   closeViewer()
+  closeCaseStudy()
   document.documentElement.dataset.dir = dir
   if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.startViewTransition(draw)
@@ -117,13 +108,14 @@ function armIdle() {
       else {
         closeInquiry()
         closeViewer()
+        closeCaseStudy()
       }
     },
-    isViewerOpen() ? READING_IDLE_MS : IDLE_MS,
+    isViewerOpen() || isCaseStudyOpen() ? READING_IDLE_MS : IDLE_MS,
   )
 }
-// `click` fires after the tap that opened a document, so the timer is armed
-// with the reading allowance in place.
+// `click` fires after the tap that opened a document or case study, so the
+// timer is armed with the reading allowance in place.
 for (const evt of ['pointerdown', 'pointermove', 'click', 'keydown', 'touchstart']) {
   window.addEventListener(evt, armIdle, { passive: true })
 }
@@ -145,8 +137,9 @@ document.addEventListener(
 // ---- Keyboard (handy for testing on a laptop) ------------------------------
 window.addEventListener('keydown', (e) => {
   if (e.target.matches('input, textarea')) return
-  // The document reader handles Escape itself; don't page products under it.
-  if (isViewerOpen() && e.key !== 'f') return
+  // The document reader and case-study page handle their own keys; don't
+  // page products underneath them.
+  if ((isViewerOpen() || isCaseStudyOpen()) && e.key !== 'f') return
   switch (e.key) {
     case 'ArrowRight':
       state.view === 'info' ? go({ index: (state.index + 1) % products.length }, 'forward') : go({ view: 'info', index: 0 })

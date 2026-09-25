@@ -1,33 +1,15 @@
 import { card, deck, pad } from '../components/deck.js'
-import { mountMap } from '../components/map.js'
-import { el, icon, logo, mountQr } from '../components/ui.js'
+import { el, icon, logo } from '../components/ui.js'
 
 /**
- * About screen. Two subpages:
- *  - 'company' (#/about): page title, head-office photo and a deck of cards
- *    the visitor swipes through (or taps the index to jump).
- *  - 'visit' (#/about/visit): interactive map, address plate and a QR that
- *    opens directions on the visitor's phone.
- *
- * The returned element carries a `cleanup()` the router calls before the
- * screen is replaced (the map holds window listeners).
+ * About screen (#/about): page title, head-office photo and a deck of cards
+ * the visitor swipes through (or taps the index to jump).
  */
-export function renderAbout(props) {
-  return props.page === 'visit' ? renderVisit(props) : renderCompany(props)
-}
-
-/* -------------------------------------------------------------------------- */
-/* Company                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function renderCompany({ brand, about, categories, initialCard, onHome, onVisit, onExplore, onInquire, onCategory }) {
+export function renderAbout({ brand, about, categories, initialCard, onHome, onExplore, onInquire, onCategory }) {
   const screen = el(
     `<section class="screen screen--about">
        <header class="topbar">
-         <div class="topbar__actions">
-           <button class="pill pill--visit" type="button">${icon('pin')}<span>Visit Us</span></button>
-           <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
-         </div>
+         <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
        </header>
 
        <div class="about__head">
@@ -50,7 +32,6 @@ function renderCompany({ brand, about, categories, initialCard, onHome, onVisit,
 
   screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
   screen.querySelector('.navbtn--home').addEventListener('click', onHome)
-  screen.querySelector('.pill--visit').addEventListener('click', onVisit)
   screen.querySelector('.cta--explore').addEventListener('click', onExplore)
   screen.querySelector('.cta--inquire').addEventListener('click', onInquire)
 
@@ -123,70 +104,4 @@ function steps(items) {
   return `<ol class="steps" role="list">${items
     .map((s, n) => `<li><span class="steps__num">${pad(n + 1)}</span><p>${s}</p></li>`)
     .join('')}</ol>`
-}
-
-/* -------------------------------------------------------------------------- */
-/* Visit us                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function renderVisit({ brand, about, onHome, onAbout, onExplore, onInquire }) {
-  const { contact, location, visit } = about
-  const screen = el(
-    `<section class="screen screen--visit">
-       <header class="topbar">
-         <div class="topbar__actions">
-           <button class="navbtn navbtn--about" type="button" aria-label="About us" title="About us">${icon('info')}</button>
-           <button class="navbtn navbtn--home" type="button" aria-label="Back to start" title="Home">${icon('home')}</button>
-         </div>
-       </header>
-
-       <div class="about__head">
-         <p class="eyebrow info__eyebrow">${visit.eyebrow}<span class="info__partner">${about.company}</span></p>
-         <h1 class="title about__title">${visit.title.replace(/\.$/, '')}<span class="dot">.</span></h1>
-         ${visit.note ? `<p class="visit__note">${visit.note}</p>` : ''}
-       </div>
-
-       <div class="visit__map" aria-label="Map showing SafeSurge at ${location.place}"></div>
-
-       <address class="plate">
-         <div class="plate__text">
-           <p class="plate__label"><span class="about__pin" aria-hidden="true"></span>${brand.name} \u00b7 ${location.place}</p>
-           <p class="plate__address">${contact.address}</p>
-           <p class="plate__lines">
-             <span class="plate__phone">${contact.phone}</span>
-             <span>${contact.email}</span>
-             <span class="plate__coords">${location.coords}</span>
-           </p>
-         </div>
-         <div class="plate__qr">
-           <div class="qr__code qr__code--plate" aria-busy="true"></div>
-           <span class="plate__qrlabel">Scan for directions on your phone</span>
-         </div>
-       </address>
-
-       <footer class="info__footer">
-         <button class="cta cta--explore" type="button"><span>Explore Products</span></button>
-         <button class="cta cta--inquire" type="button"><span>Inquire Now</span></button>
-       </footer>
-     </section>`,
-  )
-
-  screen.querySelector('.topbar').prepend(logo(brand, { onTap: onHome }))
-  screen.querySelector('.navbtn--home').addEventListener('click', onHome)
-  screen.querySelector('.navbtn--about').addEventListener('click', onAbout)
-  screen.querySelector('.cta--explore').addEventListener('click', onExplore)
-  screen.querySelector('.cta--inquire').addEventListener('click', onInquire)
-
-  const qr = screen.querySelector('.qr__code')
-  mountQr(qr, contact.mapsUrl ?? brand.site).then(() => qr.removeAttribute('aria-busy'))
-
-  const map = mountMap(screen.querySelector('.visit__map'), {
-    lat: location.lat,
-    lng: location.lng,
-    zoom: location.zoom,
-    label: brand.name,
-    sub: contact.address.split(',').slice(0, 2).join(','),
-  })
-  screen.cleanup = () => map.destroy()
-  return screen
 }

@@ -1,3 +1,4 @@
+import { openCaseStudy } from '../components/casestudy.js'
 import { card, deck } from '../components/deck.js'
 import { interests } from '../components/interests.js'
 import { el, figure, icon, logo } from '../components/ui.js'
@@ -53,8 +54,11 @@ export function renderInfo({ brand, product, category, siblings = [], index, tot
 
   cards.addEventListener('click', (e) => {
     const doc = documents[e.target.closest('[data-doc]')?.dataset.doc]
-    if (doc) openViewer(doc)
+    if (doc) return openViewer(doc)
+    const tile = e.target.closest('[data-case]')
+    if (tile) openCaseStudy(product, Number(tile.dataset.case), { category })
   })
+  if (product.caseStudies?.length) mountCaseTiles(cards, product)
 
   const qr = screen.querySelector('.qr__code')
   mountProductQr(qr).then(() => qr.removeAttribute('aria-busy'))
@@ -184,7 +188,10 @@ function pages(product) {
   }
   const groups = (product.range ?? []).filter((g) => g.items?.length)
   if (groups.length) {
-    list.push({ id: 'range', label: product.rangeLabel ?? 'Range', body: range(groups) })
+    list.push({ id: 'range', label: product.rangeLabel ?? "What's included", body: range(groups) })
+  }
+  if (product.caseStudies?.length) {
+    list.push({ id: 'cases', label: 'Case studies', body: caseStudies(product.caseStudies) })
   }
   const docs = resolveDocs(product.docs)
   if (docs.length) {
@@ -264,6 +271,37 @@ function range(withItems) {
       </section>`,
     )
     .join('')}</div>`
+}
+
+/**
+ * Case studies: a grid of tiles, each a clip (or photo), the customer tag
+ * and the title. Tapping one opens the full story in `openCaseStudy`. The
+ * media is a `[data-fig]` slot here and is filled in by `mountCaseTiles`
+ * once the card is in the DOM, because `figure()` builds a live element.
+ */
+function caseStudies(items) {
+  return `<ul class="casetiles" role="list">${items
+    .map(
+      (c, i) => `<li>
+        <button class="casetile" type="button" data-case="${i}" aria-label="Open case study: ${c.title}">
+          <span data-fig="${i}"></span>
+          <span class="casetile__text">
+            ${c.industry ? `<span class="casetile__industry">${c.industry}</span>` : ''}
+            <span class="casetile__title">${c.title}</span>
+          </span>
+          <span class="casetile__arrow">${icon('next')}</span>
+        </button>
+      </li>`,
+    )
+    .join('')}</ul>`
+}
+
+/** Drop the live media figures into the case tiles. */
+function mountCaseTiles(root, product) {
+  root.querySelectorAll('[data-fig]').forEach((slot) => {
+    const c = product.caseStudies[Number(slot.dataset.fig)]
+    slot.replaceWith(figure({ video: c.video, image: c.image, icon: product.icon, name: c.title }, 'casefig'))
+  })
 }
 
 /** Small "open the datasheet" buttons under a range model. */
