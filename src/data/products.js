@@ -321,7 +321,6 @@ export const products = [
     id: 'conveyors',
     category: 'handling',
     name: 'Conveyors',
-    partner: 'Conveline Systems, India',
     icon: 'conveyor',
     image: '/products/conveyor-1.png',
     video: '/products/conveyors.mp4',
